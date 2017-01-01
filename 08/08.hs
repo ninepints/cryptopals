@@ -1,5 +1,4 @@
 import qualified Data.ByteString.Lazy as B
-import qualified Data.ByteString as SB
 import Data.List (sort)
 import Data.Maybe (fromJust)
 import Data.Tuple (swap)
@@ -21,8 +20,8 @@ score size bytes = uniqueCount / chunkCount
 
 
 main = do
-    args <- getArgs
-    handle <- openFile (head args) ReadMode
+    [filename] <- getArgs
+    handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
     let splitContents = lines contents
