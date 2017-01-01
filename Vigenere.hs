@@ -8,7 +8,6 @@ module Vigenere (
     guessVigenereKey
 ) where
 
-import Control.Applicative (liftA2)
 import Data.Bits (xor)
 import qualified Data.ByteString.Lazy as B
 import Data.Char (chr)
@@ -102,5 +101,4 @@ guessVigenereKey ciphertext
         -- Top Vigenere keys for each key size (all combinations of
         -- single-byte keys)
         vigenereKeys :: [B.ByteString]
-        vigenereKeys = map B.pack $ concat $ map combineKeys singleByteKeys
-            where combineKeys = foldr (liftA2 (:)) [[]]
+        vigenereKeys = map B.pack $ concat $ map sequence singleByteKeys
