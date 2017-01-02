@@ -1,30 +1,28 @@
-import qualified Data.ByteString.Lazy as B
-import qualified Data.ByteString as SB
+import qualified Data.ByteString as B
 import Data.Char (chr, isSpace, ord)
-import Data.Maybe (fromJust)
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, openFile, IOMode(ReadMode))
 
-import Codec.Crypto.AES (crypt, Direction(Decrypt), Mode(ECB))
+import Crypto.Cipher.AES (AES128)
+import Crypto.Cipher.Types (cipherInit, ecbDecrypt)
+import Crypto.Error (CryptoFailable(..))
 
 import qualified ByteFormat
 
 
 main = do
-    args <- getArgs
-    handle <- openFile (head args) ReadMode
+    [filename] <- getArgs
+    handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
     let joinedContents = filter (not . isSpace) contents
-        decodedContents = fromJust $ ByteFormat.b64ToBytes joinedContents
-        key = SB.pack $ map (fromIntegral . ord) $ "YELLOW SUBMARINE"
-        iv = SB.pack $ take 16 $ repeat 0
-        plaintext = crypt ECB key iv Decrypt decodedContents
+        Just decodedContents = ByteFormat.b64ToBytes joinedContents
 
-        -- There's probably a better way to do this
-        paddingStatus | mod (B.length decodedContents) 16 == 0 = "Padding ok"
-                      | otherwise = error "Bad padding"
+        key = B.pack $ map (fromIntegral . ord) "YELLOW SUBMARINE"
 
-    putStrLn paddingStatus
+        cipher :: AES128
+        CryptoPassed cipher = cipherInit key
+        plaintext = ecbDecrypt cipher decodedContents
+
     putStrLn $ map (chr . fromIntegral) $ B.unpack plaintext
     hClose handle
