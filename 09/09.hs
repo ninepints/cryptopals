@@ -1,8 +1,9 @@
-import qualified Data.ByteString.Lazy as B
-import Data.Char (ord)
+import Data.ByteString.Lazy (ByteString)
+import Data.String (fromString)
 
-import qualified Padding
+import Padding (pkcs7pad)
 
 
-input = B.pack $ map (fromIntegral . ord) "YELLOW SUBMARINE"
-main = putStrLn $ show $ Padding.pkcs7pad 20 input
+main :: IO ()
+main = putStrLn $ show $ pkcs7pad 20 input
+    where input = fromString "YELLOW SUBMARINE" :: ByteString

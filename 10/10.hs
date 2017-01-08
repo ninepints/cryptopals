@@ -1,5 +1,6 @@
 import qualified Data.ByteString as B
 import Data.Char (chr, isSpace, ord)
+import Data.String (fromString)
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, openFile, IOMode(ReadMode))
 
@@ -17,11 +18,12 @@ main = do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
-    let joinedContents = filter (not . isSpace) contents
-        Just decodedContents = ByteFormat.b64ToBytes joinedContents
+    let joinedContents :: B.ByteString
+        joinedContents = fromString $ filter (not . isSpace) contents
+        Just decodedContents = ByteFormat.base64ToBytes joinedContents
 
-        key = B.pack $ map (fromIntegral . ord) "YELLOW SUBMARINE"
-        iv = B.pack $ replicate (blockSize cipher) 0
+        key = fromString "YELLOW SUBMARINE" :: B.ByteString
+        iv = B.replicate (blockSize cipher) 0
 
         cipher :: AES128
         CryptoPassed cipher = cipherInit key
