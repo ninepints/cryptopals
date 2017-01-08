@@ -7,17 +7,22 @@ module ByteFormat (
     b64ToBytes,
     bytesToB64,
     hexToB64,
-    b64ToHex
+    b64ToHex,
+    urlEscape,
+    urlEscapeChars
 ) where
 
-import qualified Data.ByteString.Lazy as B
-import Data.Char (chr, ord)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BL
+import Data.Char (chr, ord, toUpper)
 import qualified Data.Map.Strict as Map
+import Data.String (fromString, IsString)
 import Data.Tuple (swap)
 import Data.Word (Word8)
 import Numeric (readHex, showHex)
 
-import Util (chunksOf)
+import qualified Data.ByteString.Common as B
+import Data.Chunkable (chunksOf)
 
 
 -- | Map of integers 0-63 to corresponding base-64 characters.
@@ -33,7 +38,7 @@ b64CharToInt :: Map.Map Char Word8
 b64CharToInt = Map.fromList (('=', 0) : map swap (Map.toList b64IntToChar))
 
 
-hexToBytes :: String -> Maybe B.ByteString
+hexToBytes :: B.ByteString a => String -> Maybe a
 hexToBytes = fmap B.pack . sequence . map charPairToByte . chunksOf 2
     where
         charPairToByte h@([_,_]) = case readHex h of
@@ -42,13 +47,13 @@ hexToBytes = fmap B.pack . sequence . map charPairToByte . chunksOf 2
         charPairToByte _ = Nothing
 
 
-bytesToHex :: B.ByteString -> String
+bytesToHex :: B.ByteString a => a -> String
 bytesToHex bytes = B.unpack bytes >>= toHex
     where toHex i | i < 16 = '0' : showHex i ""
           toHex i | otherwise = showHex i ""
 
 
-b64ToBytes :: String -> Maybe B.ByteString
+b64ToBytes :: B.ByteString a => String -> Maybe a
 b64ToBytes = fmap pack . sequence . map charQuadToBytes . chunksOf 4
     where
         pack = B.pack . concat
@@ -72,7 +77,7 @@ b64ToBytes = fmap pack . sequence . map charQuadToBytes . chunksOf 4
         charQuadToBytes _ = Nothing
 
 
-bytesToB64 :: B.ByteString -> String
+bytesToB64 :: B.ByteString a => a -> String
 bytesToB64 bytes = chunksOf 3 bitPairs >>= bitPairsToB64
     where
         bitPairs = B.unpack bytes >>= bytesToBitPairs
@@ -88,8 +93,23 @@ bytesToB64 bytes = chunksOf 3 bitPairs >>= bitPairsToB64
 
 
 hexToB64 :: String -> Maybe String
-hexToB64 = fmap bytesToB64 . hexToBytes
+hexToB64 = fmap (bytesToB64 :: BL.ByteString -> String) . hexToBytes
 
 
 b64ToHex :: String -> Maybe String
-b64ToHex = fmap bytesToHex . b64ToBytes
+b64ToHex = fmap (bytesToHex :: BL.ByteString -> String) . b64ToBytes
+
+
+urlEscape :: (B.ByteString a, IsString a) => a -> a
+urlEscape = urlEscapeChars $ fromString "!*'();:@&=+$,/?#[]"
+
+-- | URL-escape the second argument, only replacing bytes that are
+-- present in the first.
+urlEscapeChars :: (B.ByteString a, IsString a) => a -> a -> a
+urlEscapeChars escapeBytes = B.concatMap escape
+    where
+        escape byte = if byte `B.elem` escapeBytes
+            then B.append (fromString "%") $ definitelyEscape byte
+            else B.singleton byte
+        definitelyEscape = fromString . map toUpper . bytesToHex . BS.singleton
+
