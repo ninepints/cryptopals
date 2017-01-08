@@ -1,6 +1,7 @@
 import qualified Data.ByteString as B
 import Data.Char (ord)
 import qualified Data.Map.Strict as Map
+import Data.String (fromString)
 import Text.Printf (printf)
 
 import Crypto.Cipher.AES (AES128)
@@ -13,7 +14,7 @@ import Util (randomlyKeyedCipherIO, uniqueness)
 
 
 secret :: B.ByteString
-Just secret = ByteFormat.b64ToBytes $ "Um9s" ++
+Just secret = ByteFormat.base64ToBytes $ fromString $ "Um9s" ++
     "bGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFp" ++
     "ciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0" ++
     "IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
@@ -29,7 +30,7 @@ makeOracle cipher input = ecbEncrypt cipher $ pad $ B.append input secret
 
 
 aaa :: Integer -> B.ByteString
-aaa n = B.pack $ map (fromIntegral . ord) $ replicate (fromIntegral n) 'A'
+aaa n = B.replicate (fromIntegral n) $ fromIntegral $ ord 'A'
 
 
 findBlockSize :: Oracle -> Integer

@@ -1,5 +1,6 @@
 import qualified Data.ByteString as B
 import Data.Char (chr, isSpace, ord)
+import Data.String (fromString)
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, openFile, IOMode(ReadMode))
 
@@ -10,13 +11,15 @@ import Crypto.Error (CryptoFailable(..))
 import qualified ByteFormat
 
 
+main :: IO ()
 main = do
     [filename] <- getArgs
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
-    let joinedContents = filter (not . isSpace) contents
-        Just decodedContents = ByteFormat.b64ToBytes joinedContents
+    let joinedContents :: B.ByteString
+        joinedContents = fromString $ filter (not . isSpace) contents
+        Just decodedContents = ByteFormat.base64ToBytes joinedContents
 
         key = B.pack $ map (fromIntegral . ord) "YELLOW SUBMARINE"
 

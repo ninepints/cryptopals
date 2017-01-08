@@ -1,10 +1,17 @@
-import Data.Bits (xor)
-import qualified Data.ByteString.Lazy as B
+import Data.ByteString.Lazy (ByteString)
+import Data.String (fromString)
 
 import qualified ByteFormat
+import Util (xorBytes)
 
 
-Just input1 = ByteFormat.hexToBytes "1c0111001f010100061a024b53535009181c"
-Just input2 = ByteFormat.hexToBytes "686974207468652062756c6c277320657965"
-output = B.pack $ B.zipWith xor input1 input2
-main = putStrLn $ ByteFormat.bytesToHex output
+input1 :: ByteString
+Just input1 = ByteFormat.hexToBytes $
+    fromString "1c0111001f010100061a024b53535009181c"
+
+input2 :: ByteString
+Just input2 = ByteFormat.hexToBytes $
+    fromString "686974207468652062756c6c277320657965"
+
+main :: IO ()
+main = putStrLn $ show $ ByteFormat.bytesToHex $ xorBytes input1 input2

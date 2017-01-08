@@ -28,7 +28,7 @@ decrypt cipher = (>>= parseQueryString) . pkcs7unpad . ecbDecrypt cipher
 
 
 aaa :: Integer -> B.ByteString
-aaa n = B.pack $ map (fromIntegral . ord) $ replicate (fromIntegral n) 'A'
+aaa n = B.replicate (fromIntegral n) $ fromIntegral $ ord 'A'
 
 
 -- So, we've got an oracle function that will take a bytestring and

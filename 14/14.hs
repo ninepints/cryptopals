@@ -1,6 +1,7 @@
 import qualified Data.ByteString as B
 import Data.Char (ord)
 import qualified Data.Map.Strict as Map
+import Data.String (fromString)
 import System.Random (randomRIO)
 import Text.Printf (printf)
 
@@ -14,7 +15,7 @@ import Util (mode, randomBytesIO, randomlyKeyedCipherIO)
 
 
 secret :: B.ByteString
-Just secret = ByteFormat.b64ToBytes $ "Um9s" ++
+Just secret = ByteFormat.base64ToBytes $ fromString $ "Um9s" ++
     "bGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFp" ++
     "ciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0" ++
     "IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
@@ -32,8 +33,7 @@ makeOracle cipher prefix input = ecbEncrypt cipher $ pad plaintext
 
 
 repeatChar :: Char -> Integer -> B.ByteString
-repeatChar char n = B.pack $ map (fromIntegral . ord) charList
-    where charList = replicate (fromIntegral n) char
+repeatChar char n = B.replicate (fromIntegral n) $ fromIntegral $ ord char
 
 aaa :: Integer -> B.ByteString
 aaa = repeatChar 'A'

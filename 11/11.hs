@@ -39,7 +39,7 @@ guessIsCbc bytes = not $ uniqueness (chunksOf 16 bytes) < 1
 testGuess :: IO Bool
 testGuess = do
     gen <- newStdGen
-    let aaa = B.pack $ map (fromIntegral . ord) $ replicate 48 'A'
+    let aaa = B.replicate 48 $ fromIntegral $ ord 'A'
         (ciphertext, truth, _) = ecbOrCbc gen aaa
         guess = guessIsCbc ciphertext
     putStrLn $ printf "Guessed %v, truth was %v" (show guess) (show truth)
