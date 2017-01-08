@@ -12,11 +12,12 @@ import Data.Bits (xor)
 import qualified Data.ByteString.Lazy as B
 import Data.Char (chr)
 import Data.Function (on)
-import Data.List (permutations, sortBy, transpose)
+import Data.List (permutations, sortBy)
 import Data.Word (Word8)
 
+import Data.Chunkable (chunksOf)
 import FrequencyAnalysis
-import Util (chunksOf, hammingDistance)
+import Util (hammingDistance)
 
 -- | Guesses the key size of the Vigenere cipher used to generate a
 -- ciphertext. Looks at key sizes from two to half the length of the
@@ -29,8 +30,8 @@ guessKeySize ciphertext = sortBy (compare `on` score) [2..maxSize]
         score size = (totalDist / fromIntegral (size * length chunkPairs), size)
             where
                 isSize = (==) size . fromIntegral . B.length
-                chunks = take 4 $ filter isSize $ chunksOf size ciphertext
-                chunkPairs = map (take 2) $ permutations chunks
+                chunks = filter isSize $ chunksOf (fromIntegral size) ciphertext
+                chunkPairs = map (take 2) $ permutations $ take 4 chunks
                 pairDist [x, y] = hammingDistance x y
                 totalDist = fromIntegral $ sum $ map pairDist chunkPairs
 
@@ -56,13 +57,13 @@ toDecryption decryptFunc ciphertext key = Decryption
 -- Decryption part of the Show typeclass, but the Show documentation
 -- says Show representations should be "syntactically correct Haskell
 -- expressions" and I don't wanna print the ciphertext out each time
-showDecryption :: (Show a) => Decryption a -> String
+showDecryption :: Show a => Decryption a -> String
 showDecryption d = "Decryption {key = " ++ show (key d) ++
     ", plaintext = " ++ show (plaintext d) ++
     ", score = " ++ show (score d) ++ "}"
 
 
-chr' :: (Integral a) => a -> Char
+chr' :: Integral a => a -> Char
 chr' = chr . fromIntegral
 
 
@@ -86,7 +87,7 @@ guessVigenereKey ciphertext
         -- Single-byte ciphertexts for each byte for each key size
         singleByteCiphertexts :: [[B.ByteString]]
         singleByteCiphertexts = map (B.transpose . chunkCiphertext) topKeySizes
-            where chunkCiphertext size = chunksOf size ciphertext
+            where chunkCiphertext size = chunksOf (fromIntegral size) ciphertext
 
         -- Top single-byte keys for each byte for each key size
         -- (currently the very top key because considering multiple
