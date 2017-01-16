@@ -12,6 +12,7 @@ module ByteFormat (
     urlEscapeChars
 ) where
 
+import Control.Monad (guard, liftM2)
 import qualified Data.Map.Strict as Map
 import Data.String (fromString, IsString)
 import Data.Tuple (swap)
@@ -51,14 +52,17 @@ hexDecoding = Map.fromList $ map swap $ Map.toList hexEncoding
 
 
 hexToBytes :: B.ByteString a => a -> Maybe a
-hexToBytes = fmap B.pack . sequence . map charPairToByte . chunksOf 2 . B.unpack
+hexToBytes input = fmap B.pack $ sequence bytes
     where
-        decode = (Map.!) hexDecoding . toLower'
-        charPairToByte [a,b] = let
+        bytes = map pairToByte $ chunksOf 2 $ B.unpack input
+        decode char = Map.lookup (toLower' char) hexDecoding
+
+        pairToByte :: [Word8] -> Maybe Word8
+        pairToByte [a,b] = let
             x1 = decode a
             x2 = decode b
-            in Just $ 16 * x1 + x2
-        charPairToByte _ = Nothing
+            in liftM2 (+) (fmap (* 16) x1) x2
+        pairToByte _ = Nothing
 
 
 bytesToHex :: B.ByteString a => a -> a
@@ -70,43 +74,52 @@ bytesToHex = B.concatMap byteToHex
 
 
 base64ToBytes :: B.ByteString a => a -> Maybe a
-base64ToBytes = fmap (pack) . sequence . map charQuadToBytes . chunksOf 4 . B.unpack
+base64ToBytes input = fmap (B.pack . concat) $ sequence bytes
     where
-        pack = B.pack . concat
-        decode = (Map.!) base64Decoding
+        charQuads = chunksOf 4 $ B.unpack input
+        bytes =  map charQuadToBytes charQuads
+        decode char = Map.lookup char base64Decoding
 
+        charQuadToBytes :: [Word8] -> Maybe [Word8]
         charQuadToBytes [a,b,c,d]
-            | c == eq && d == eq = let
-                x1 = decode a
-                (x2,y1) = quotRem (decode b) 16
-                in if y1 == 0 then Just [4 * x1 + x2] else Nothing
-            | c == eq = let
-                x1 = decode a
-                (x2,y1) = quotRem (decode b) 16
-                (y2,z1) = quotRem (decode c) 4
-                in if z1 == 0 then Just [4 * x1 + x2, 16 * y1 + y2] else Nothing
-            | otherwise = let
-                x1 = decode a
-                (x2,y1) = quotRem (decode b) 16
-                (y2,z1) = quotRem (decode c) 4
-                z2 = decode d
-                in Just [4 * x1 + x2, 16 * y1 + y2, 64 * z1 + z2]
+            | c == eq && d == eq = do
+                x1 <- decode a
+                x2y1 <- decode b
+                let (x2, y1) = quotRem x2y1 16
+                guard (y1 == 0) >> return [4 * x1 + x2]
+            | d == eq = do
+                x1 <- decode a
+                x2y1 <- decode b
+                y2z1 <- decode c
+                let (x2, y1) = quotRem x2y1 16
+                    (y2, z1) = quotRem y2z1 4
+                guard (z1 == 0) >> return [4 * x1 + x2, 16 * y1 + y2]
+            | otherwise = do
+                x1 <- decode a
+                x2y1 <- decode b
+                y2z1 <- decode c
+                z2 <- decode d
+                let (x2, y1) = quotRem x2y1 16
+                    (y2, z1) = quotRem y2z1 4
+                return [4 * x1 + x2, 16 * y1 + y2, 64 * z1 + z2]
         charQuadToBytes _ = Nothing
 
 
 bytesToBase64 :: B.ByteString a => a -> a
-bytesToBase64 bytes = B.pack $ chunksOf 3 bitPairs >>= bitPairsToB64
+bytesToBase64 bytes = B.pack base64Chars
     where
-        bitPairs = B.unpack bytes >>= bytesToBitPairs
+        base4 = B.unpack bytes >>= byteToBase4
+        base64Chars = chunksOf 3 base4 >>= base4To64
+
         encode = (Map.!) base64Encoding
-        bytesToBitPairs x = [a,b,c,d]
+        byteToBase4 byte = [a,b,c,d]
             where
-                (r1,d) = quotRem x 4
+                (r1,d) = quotRem byte 4
                 (r2,c) = quotRem r1 4
                 (a,b) = quotRem r2 4
-        bitPairsToB64 [x,y,z] = [encode (16 * x + 4 * y + z)]
-        bitPairsToB64 [x,y] = [encode (16 * x + 4 * y), eq]
-        bitPairsToB64 [x] = [encode (16 * x), eq, eq]
+        base4To64 [x,y,z] = [encode (16 * x + 4 * y + z)]
+        base4To64 [x,y] = [encode (16 * x + 4 * y), eq]
+        base4To64 [x] = [encode (16 * x), eq, eq]
 
 
 hexToBase64 :: B.ByteString a => a -> Maybe a
