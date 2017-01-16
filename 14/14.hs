@@ -114,8 +114,8 @@ findSecret' oracle prefixLength secretLength bytesSoFar
         inputs = map (B.snoc (B.append ourPrefix bytesSoFar)) [0..255]
 
         -- Function truncating oracle output to just the blocks of interest
-        fullPrefixBlocks = fromIntegral $ prefixLength `div` 16
-        truncate = B.take $ 16 * fullPrefixBlocks + (B.length $ head inputs)
+        addPrefixLength = (+) $ fromIntegral prefixLength
+        truncate = B.take $ addPrefixLength $ B.length $ head inputs
 
         outputMap = Map.fromList $ zip (map (truncate . oracle) inputs) [0..255]
         referenceOutput = truncate $ oracle ourPrefix
