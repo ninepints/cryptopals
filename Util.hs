@@ -8,7 +8,8 @@ module Util (
     uniqueness,
     parseQueryString,
     buildQueryString,
-    mode
+    mode,
+    getOnly
 ) where
 
 import Control.Monad (guard)
@@ -22,6 +23,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.String (fromString, IsString)
 import System.Random (getStdRandom, random, RandomGen)
+import Text.Printf (printf)
 
 import Crypto.Cipher.Types (cipherKeySize, cipherInit,
                             Cipher, KeySizeSpecifier(..))
@@ -115,3 +117,10 @@ buildQueryString mapping = joinAmp $ map joinEq splits
 mode :: Ord a => [a] -> a
 mode xs = fst $ maximumBy (compare `on` snd) $ Map.toList counter
     where counter = Map.fromListWith (+) $ zip xs $ repeat 1
+
+
+-- | Get the single element of list, erroring
+-- if the list contains 0 or 2+ elements.
+getOnly :: [a] -> a
+getOnly [x] = x
+getOnly xs = error $ printf "%d elements in list (expected 1)" $ length xs
