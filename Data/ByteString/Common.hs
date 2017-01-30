@@ -12,6 +12,7 @@ class ByteString a where
     append :: a -> a -> a
     concat :: [a] -> a
     concatMap :: (Word8 -> a) -> a -> a
+    cons :: Word8 -> a -> a
     elem :: Word8 -> a -> Bool
     empty :: a
     filter :: (Word8 -> Bool) -> a -> a
@@ -36,6 +37,7 @@ instance ByteString BS.ByteString where
     append = BS.append
     concat = BS.concat
     concatMap = BS.concatMap
+    cons = BS.cons
     elem = BS.elem
     empty = BS.empty
     filter = BS.filter
@@ -60,6 +62,7 @@ instance ByteString BL.ByteString where
     append = BL.append
     concat = BL.concat
     concatMap = BL.concatMap
+    cons = BL.cons
     elem = BL.elem
     empty = BL.empty
     filter = BL.filter
