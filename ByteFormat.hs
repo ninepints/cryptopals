@@ -6,8 +6,7 @@ module ByteFormat (
     bytesToHex,
     base64ToBytes,
     bytesToBase64,
-    hexToBase64,
-    base64ToHex,
+    integerToBytes,
     urlEscape,
     urlEscapeChars
 ) where
@@ -122,12 +121,18 @@ bytesToBase64 bytes = B.pack base64Chars
         base4To64 [x] = [encode (16 * x), eq, eq]
 
 
-hexToBase64 :: B.ByteString a => a -> Maybe a
-hexToBase64 = fmap bytesToBase64 . hexToBytes
-
-
-base64ToHex :: B.ByteString a => a -> Maybe a
-base64ToHex = fmap bytesToHex . base64ToBytes
+-- | Return a big-endian representation of a nonnegative integer.
+--
+-- >>> integerToBytes 24936
+-- "ah"
+-- >>> integerToBytes 0
+-- ""
+integerToBytes :: B.ByteString a => Integer -> a
+integerToBytes n | n < 0 = error "Input negative"
+                 | n == 0 = B.empty
+                 | n < 256 = B.singleton $ fromIntegral n
+                 | otherwise = B.cons (fromIntegral first) $ integerToBytes rest
+    where (first, rest) = n `divMod` 256
 
 
 urlEscape :: (B.ByteString a, IsString a) => a -> a
