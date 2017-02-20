@@ -14,4 +14,4 @@ Just input2 = ByteFormat.hexToBytes $
     fromString "686974207468652062756c6c277320657965"
 
 main :: IO ()
-main = putStrLn $ show $ ByteFormat.bytesToHex $ xorBytes input1 input2
+main = print $ ByteFormat.bytesToHex $ xorBytes input1 input2

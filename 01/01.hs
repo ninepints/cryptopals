@@ -13,4 +13,4 @@ hexToBase64 :: ByteString -> Maybe ByteString
 hexToBase64 = fmap ByteFormat.bytesToBase64 . ByteFormat.hexToBytes
 
 main :: IO ()
-main = putStrLn $ show $ hexToBase64 input
+main = print $ hexToBase64 input

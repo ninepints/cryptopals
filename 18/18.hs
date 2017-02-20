@@ -23,4 +23,4 @@ cipher :: AES128
 CryptoPassed cipher = cipherInit key
 
 main :: IO ()
-main = putStrLn $ show $ ctrCombine cipher iv ciphertext
+main = print $ ctrCombine cipher iv ciphertext

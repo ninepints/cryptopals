@@ -25,5 +25,5 @@ main = do
         candidates = map (swap . fmap score) indexedContents
         topCandidates = take 5 $ sort candidates
 
-    _ <- sequence $ map (putStrLn . show) $ topCandidates
+    sequence_ $ map print topCandidates
     hClose handle
