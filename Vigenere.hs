@@ -1,12 +1,9 @@
 module Vigenere (
-    key,
-    ciphertext,
-    plaintext,
-    score,
     showSolution,
     guessSingleByteKey,
     guessVigenereKey,
-    Solution
+    guessVigenereKey',
+    Solution(..)
 ) where
 
 import Data.Bits (xor)
@@ -24,17 +21,18 @@ import Util (hammingDistance, xorBytes)
 -- ciphertext. Looks at key sizes from two to half the length of the
 -- ciphertext (up to 64). Returns a list of key sizes, most probable
 -- first.
-guessKeySize :: (B.ByteString a, Chunkable a) => a -> [Int]
+guessKeySize :: (B.ByteString a, Chunkable a) => a -> [Integer]
 guessKeySize ciphertext = sortBy (compare `on` score) [2..maxSize]
     where
-        maxSize = fromIntegral $ min 64 $ div (B.length ciphertext) 2
-        score size = (totalDist / fromIntegral (size * length chunkPairs), size)
+        maxSize = min 64 $ div (B.length ciphertext) 2
+        score size = ((fromIntegral totalDist / fromIntegral totalBytes), size)
             where
-                isSize = (==) size . fromIntegral . B.length
-                chunks = filter isSize $ chunksOf (fromIntegral size) ciphertext
+                isSize = (==) size . B.length
+                chunks = filter isSize $ chunksOf size ciphertext
                 chunkPairs = map (take 2) $ permutations $ take 4 chunks
                 pairDist [x, y] = hammingDistance x y
-                totalDist = fromIntegral $ sum $ map pairDist chunkPairs
+                totalDist = sum $ map pairDist chunkPairs
+                totalBytes = size * fromIntegral (length chunkPairs)
 
 
 data Solution a k = Solution {
@@ -45,11 +43,11 @@ data Solution a k = Solution {
 }
 
 toSolution :: B.ByteString a => (a -> k -> a) -> a -> k -> Solution a k
-toSolution decipher ciphertext key = Solution
+toSolution decipherFunc ciphertext key = Solution
     key
     ciphertext
-    (decipher ciphertext key)
-    (FrequencyAnalysis.scoreEnglish $ decipher ciphertext key)
+    (decipherFunc ciphertext key)
+    (FrequencyAnalysis.scoreEnglish $ decipherFunc ciphertext key)
 
 -- Builds a String representation of a Solution. I could just make
 -- Solution part of the Show typeclass, but the Show documentation
@@ -64,21 +62,30 @@ showSolution d = "Solution {key = " ++ show (key d) ++
 -- | Guesses the single-byte repeating key with which a ciphertext
 -- was XOR'ed. Returns a list of all possible solutions.
 guessSingleByteKey :: B.ByteString a => a -> [Solution a Word8]
-guessSingleByteKey ciphertext = map (toSolution decrypt ciphertext) [0..255]
-    where decrypt text key = B.map (xor key) text
+guessSingleByteKey ciphertext = map (toSolution decipher ciphertext) [0..255]
+    where decipher text key = B.map (xor key) text
+
 
 
 -- | Guesses the Vigenere key with which a ciphertext was XOR'ed.
 guessVigenereKey :: (B.ByteString a, Chunkable a) => a -> [Solution a a]
 guessVigenereKey ciphertext
     | B.length ciphertext < 4 = error "Four-plus bytes required to guess key"
-    | otherwise = map (toSolution decrypt ciphertext) vigenereKeys
+    | otherwise = guessVigenereKey' ciphertext topKeySizes
+    where topKeySizes = take 3 $ guessKeySize ciphertext
+
+
+-- | Guesses the Vigenere key with which a ciphertext was XOR'ed.
+-- Guesses are based on the given list of key sizes.
+guessVigenereKey' :: (B.ByteString a, Chunkable a) =>
+    a -> [Integer] -> [Solution a a]
+guessVigenereKey' ciphertext keySizes = map wrapper vigenereKeys
     where
-        topKeySizes = take 3 $ guessKeySize ciphertext
-        decrypt text key = xorBytes (B.cycleToLength (B.length text) key) text
+        wrapper = toSolution decipher ciphertext
+        decipher text key = xorBytes (B.cycleToLength (B.length text) key) text
 
         -- Single-byte ciphertexts for each byte for each key size: [[a]]
-        singleByteCiphertexts = map (B.transpose . chunkCiphertext) topKeySizes
+        singleByteCiphertexts = map (B.transpose . chunkCiphertext) keySizes
             where chunkCiphertext size = chunksOf (fromIntegral size) ciphertext
 
         -- Top single-byte keys for each byte for each key size
