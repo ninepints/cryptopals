@@ -1,5 +1,6 @@
 module Util (
     xorBytes,
+    xorBytesShortest,
     randomBytes,
     randomBytesIO,
     randomlyKeyedCipher,
@@ -36,8 +37,11 @@ import ByteFormat (urlEscape)
 xorBytes :: B.ByteString a => a -> a -> a
 xorBytes x y
     | (B.length x) /= (B.length y) = error "ByteStrings differ in length"
-    | otherwise = B.pack $ B.zipWith xor x y
+    | otherwise = xorBytesShortest x y
 
+-- | XOR two ByteStrings, dropping trailing bytes if one is longer.
+xorBytesShortest :: B.ByteString a => a -> a -> a
+xorBytesShortest x y = B.pack $ B.zipWith xor x y
 
 -- | Generate a random bytestring of the specified length. This is
 -- NOT CRYPTOGRAPHICALLY SECURE. (Haskell appears to lack a built-in
