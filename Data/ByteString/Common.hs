@@ -3,7 +3,7 @@ module Data.ByteString.Common where
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Word (Word8)
-import Prelude ((.), fromIntegral, Bool, Integer)
+import Prelude (($), (.), fromIntegral, Bool, Integer)
 import qualified Prelude as P
 
 
@@ -17,6 +17,7 @@ class ByteString a where
     empty :: a
     filter :: (Word8 -> Bool) -> a -> a
     head :: a -> Word8
+    index :: a -> Integer -> Word8
     intercalate :: a -> [a] -> a
     last :: a -> Word8
     length :: a -> Integer
@@ -42,6 +43,7 @@ instance ByteString BS.ByteString where
     empty = BS.empty
     filter = BS.filter
     head = BS.head
+    index a i = BS.index a $ fromIntegral i
     intercalate = BS.intercalate
     last = BS.last
     length = fromIntegral . BS.length
@@ -67,6 +69,7 @@ instance ByteString BL.ByteString where
     empty = BL.empty
     filter = BL.filter
     head = BL.head
+    index a i = BL.index a $ fromIntegral i
     intercalate = BL.intercalate
     last = BL.last
     length = fromIntegral . BL.length
