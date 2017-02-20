@@ -10,6 +10,6 @@ main = do
         input2 = fromString "ICE ICE BABY\x05\x05\x05\x05" :: ByteString
         input3 = fromString "ICE ICE BABY\x01\x02\x03\x04" :: ByteString
 
-    putStrLn $ show $ pkcs7unpad input1
-    putStrLn $ show $ pkcs7unpad input2
-    putStrLn $ show $ pkcs7unpad input3
+    print $ pkcs7unpad input1
+    print $ pkcs7unpad input2
+    print $ pkcs7unpad input3

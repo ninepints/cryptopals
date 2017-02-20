@@ -41,5 +41,5 @@ main = do
         candidates = indexedContents >>= toIndexedCandidates
         topCandidates = take 5 $ sortBy indexedCandidateCmp candidates
 
-    _ <- sequence $ map (putStrLn . showIndexedCandidate) topCandidates
+    sequence_ $ map (putStrLn . showIndexedCandidate) topCandidates
     hClose handle

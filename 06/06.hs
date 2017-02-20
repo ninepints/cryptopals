@@ -19,5 +19,5 @@ main = do
         Just decodedContents = ByteFormat.base64ToBytes joinedContents
         candidates = V.guessVigenereKey decodedContents
 
-    _ <- sequence $ map (putStrLn . V.showSolution) candidates
+    sequence_ $ map (putStrLn . V.showSolution) candidates
     hClose handle

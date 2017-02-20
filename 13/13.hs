@@ -70,5 +70,5 @@ main = do
         userBlocks = chunksOf 16 $ encrypt' $ aaa 4
         adminBlocks = init userBlocks ++ [adminBlock]
 
-    putStrLn $ show $ decrypt' $ B.concat adminBlocks
+    print $ decrypt' $ B.concat adminBlocks
 

@@ -79,7 +79,7 @@ crackSecret oracle iv secret = B.concat $ map crackPair pairs
         crackPair [x,y] = crackBlock oracle x y
 
 
-main :: IO [()]
+main :: IO ()
 main = do
     cipher <- randomlyKeyedCipherIO :: IO AES128
     iv <- randomBytesIO $ fromIntegral $ blockSize cipher
@@ -88,4 +88,4 @@ main = do
         decrypt' = decrypt cipher iv
         encryptAndCrack = pkcs7unpad . crackSecret decrypt' iv . encrypt'
 
-    sequence $ map (putStrLn . show . encryptAndCrack) secrets
+    sequence_ $ map (print . encryptAndCrack) secrets

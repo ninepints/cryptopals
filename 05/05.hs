@@ -14,5 +14,4 @@ key :: B.ByteString
 key = B.cycle $ fromString "ICE"
 
 main :: IO ()
-main = putStrLn $ show $ ByteFormat.bytesToHex result
-    where result = B.pack $ B.zipWith xor input key
+main = print $ ByteFormat.bytesToHex $ B.pack $ B.zipWith xor input key
