@@ -1,10 +1,20 @@
 -- Based on pseudocode from https://en.wikipedia.org/wiki/Mersenne_Twister
--- (all these single-letter variable names are on them)
-module System.Random.Mersenne (seedGen, next, MersenneGen) where
+-- (most of these single-letter variable names are on them)
+module System.Random.Mersenne (
+    seedGen,
+    genFromState,
+    stateLength,
+    next,
+    temper,
+    untemper,
+    MersenneGen
+) where
 
 import Data.Array.IArray ((!), array, Array)
-import Data.Bits ((.&.), complement, shiftL, shiftR, testBit, xor)
+import Data.Bits ((.&.), (.|.), bit, complement, finiteBitSize, shiftL, shiftR,
+                  testBit, xor, FiniteBits)
 import Data.Word (Word32)
+import Text.Printf (printf)
 
 
 w :: Word32
@@ -74,6 +84,18 @@ seedGen seed = MersenneGen mt n
                 prevShifted = shiftR prev $ fromIntegral $ w - 2
 
 
+genFromState :: [Word32] -> MersenneGen
+genFromState state | length state == fromIntegral n = MersenneGen mt n
+                   | otherwise = error msg
+    where
+        mt = array (0, n-1) $ zip [0..n-1] state
+        msg = printf "State has %u elements (expected %u)" (length state) n
+
+
+stateLength :: Integer
+stateLength = fromIntegral n
+
+
 next :: MersenneGen -> (Word32, MersenneGen)
 next gen@(MersenneGen mt i) | i == n = next $ twist gen
                             | otherwise = (temper (mt!i), MersenneGen mt (i+1))
@@ -84,6 +106,50 @@ temper = lowWBits . (\x -> x `xor` shiftR x (fromIntegral l)) .
     (\x -> x `xor` shiftL x (fromIntegral t) .&. c) .
     (\x -> x `xor` shiftL x (fromIntegral s) .&. b) .
     (\x -> x `xor` shiftR x (fromIntegral u) .&. d)
+
+
+untemper :: Word32 -> Word32
+untemper = lowWBits .
+    reverseShift (fromIntegral u) False d .
+    reverseShift (fromIntegral s) True b .
+    reverseShift (fromIntegral t) True c .
+    reverseShift (fromIntegral l) False (-1)
+    where
+        reverseShift :: Integer -> Bool -> Word32 -> Word32 -> Word32
+        reverseShift n wasLeft mask bits = foldl1 (.|.) origChunks
+            where
+                chunk = chunksOf n (not wasLeft)
+                maskChunks = 0 : tail (chunk mask)
+                bitChunks = chunk bits
+                origChunks = reverseShift' n wasLeft maskChunks bitChunks
+
+        reverseShift' :: FiniteBits a => Integer -> Bool -> [a] -> [a] -> [a]
+        reverseShift' _ _ [] [] = []
+        reverseShift' _ _ (m:[]) (x:[]) = [m `xor` x]
+        reverseShift' n wasLeft (m:m':ms) (x:xs) = thisChunk : nextChunks
+            where
+                thisChunk = m `xor` x
+                shift = if wasLeft then shiftL else shiftR
+                nextMask = m' .&. shift thisChunk (fromIntegral n)
+                nextChunks = reverseShift' n wasLeft (nextMask : ms) xs
+
+
+-- | Similar to Chunkable.chunksOf, but embeds results within an all-
+-- zero series of bytes. Also supports reversing the input.
+--
+-- >>> chunksOf 7 True 0x55
+-- [0x54, 0x01]
+-- >>> chunksOf 3 False 0x55
+-- [0x01, 0x14, 0x40]
+chunksOf :: FiniteBits a => Integer -> Bool -> a -> [a]
+chunksOf n fromLeft bits = map getChunk [0..numChunks-1]
+    where
+        m = fromIntegral $ finiteBitSize bits
+        (d, r) = m `divMod` n
+        numChunks = d + if r == 0 then 0 else 1
+        bitFromEnd = bit . fromIntegral . if fromLeft then (-) (m - 1) else id
+        getChunk i = bits .&. foldl1 (.|.) maskBits
+            where maskBits = map bitFromEnd [i * n .. (i+1) * n - 1]
 
 
 twist :: MersenneGen -> MersenneGen

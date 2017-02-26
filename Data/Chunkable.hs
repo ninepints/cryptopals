@@ -10,25 +10,21 @@ class Chunkable a where
     null :: a -> Bool
     take :: Integer -> a -> a
     drop :: Integer -> a -> a
-    concat :: [a] -> a
 
 instance Chunkable [a] where
     null = P.null
     take = P.take . fromIntegral
     drop = P.drop . fromIntegral
-    concat = P.concat
 
 instance Chunkable BL.ByteString where
     null = BL.null
     take = BL.take . fromIntegral
     drop = BL.drop . fromIntegral
-    concat = BL.concat
 
 instance Chunkable BS.ByteString where
     null = BS.null
     take = BS.take . fromIntegral
     drop = BS.drop . fromIntegral
-    concat = BS.concat
 
 
 -- | Partition a chunkable object into chunks of uniform size.
