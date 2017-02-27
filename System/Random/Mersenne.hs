@@ -7,14 +7,19 @@ module System.Random.Mersenne (
     next,
     temper,
     untemper,
+    sketchyCtr,
     MersenneGen
 ) where
 
+import Control.Monad.State (evalState, state)
 import Data.Array.IArray ((!), array, Array)
 import Data.Bits ((.&.), (.|.), bit, complement, finiteBitSize, shiftL, shiftR,
                   testBit, xor, FiniteBits)
 import Data.Word (Word32)
 import Text.Printf (printf)
+
+import qualified Data.ByteString.Common as B
+import Util (xorBytes)
 
 
 w :: Word32
@@ -163,3 +168,18 @@ twist (MersenneGen mt _) = MersenneGen mt' 0
                 xLower = getWrapping (i+1) .&. lowerMask
                 x = xUpper + xLower
                 xa = if testBit x 0 then shiftR x 1 `xor` a else shiftR x 1
+
+
+sketchyCtr :: B.ByteString a => Word32 -> a -> a
+sketchyCtr seed input = xorBytes (B.take (B.length input) keystream) input
+    where
+        (d, r) = B.length input `divMod` 4
+        numOutputs = fromIntegral $ d + if r == 0 then 0 else 1
+        gen = seedGen seed
+        outputs = evalState (sequence $ replicate numOutputs $ state next) gen
+        keystream = B.pack $ outputs >>= (\output -> map fromIntegral [
+                output .&. 0x000000ff,
+                (output .&. 0x0000ff00) `shiftR` 8,
+                (output .&. 0x00ff0000) `shiftR` 16,
+                (output .&. 0xff000000) `shiftR` 24
+            ])
