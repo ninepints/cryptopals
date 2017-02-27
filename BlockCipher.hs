@@ -14,7 +14,7 @@ import Util (xorBytes)
 blockAdapt :: BlockCipher c =>
     (c -> B.ByteString -> [B.ByteString] -> [B.ByteString]) ->
     c -> B.ByteString -> B.ByteString -> B.ByteString
-blockAdapt blockFunc cipher iv = C.concat . blockFunc cipher iv . split
+blockAdapt blockFunc cipher iv = B.concat . blockFunc cipher iv . split
     where split = C.chunksOf $ fromIntegral $ blockSize cipher
 
 
@@ -54,12 +54,13 @@ cbcDecryptBlocks cipher iv remainingBlocks = outputHead : outputTail
 ctrCombine :: BlockCipher c =>
     c -> B.ByteString -> B.ByteString -> B.ByteString
 ctrCombine cipher iv input
-    | keyBlocks > ctrSize * 256 = error "Counter overflow"
-    | otherwise = B.pack $ B.zipWith xor keystream input
+    | keyBlocks > 256 ^ ctrSize = error "Counter overflow"
+    | otherwise = xorBytes (B.take (B.length input) keystream) input
     where
-        keyBlocks = fromIntegral $ (B.length input + 1) `div` blockSize cipher
+        (d, r) = B.length input `divMod` blockSize cipher
+        keyBlocks = fromIntegral $ d + if r == 0 then 0 else 1
         ctrSize = fromIntegral $ blockSize cipher `div` 2
-        ctrVals = map ByteFormat.integerToBytes [0..keyBlocks]
+        ctrVals = map ByteFormat.integerToBytes [0..keyBlocks-1]
         ctrVals' = map (constantPad ctrSize 0 . B.reverse) ctrVals
         keystream = B.concat $ map (ecbEncrypt cipher . B.append iv) ctrVals'
 
