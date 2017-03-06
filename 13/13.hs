@@ -1,7 +1,5 @@
-import qualified Data.ByteString as B
-import Data.Char (ord)
+import qualified Data.ByteString.Char8 as B
 import qualified Data.Map.Strict as Map
-import Data.String (fromString)
 
 import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (blockSize, ecbEncrypt, ecbDecrypt, BlockCipher)
@@ -16,9 +14,9 @@ encrypt cipher email = ecbEncrypt cipher $ pad $ buildQueryString profile
     where
         pad = pkcs7pad $ fromIntegral $ blockSize cipher
         profile = Map.fromList [
-                (fromString "email", email),
-                (fromString "uid", fromString "10"),
-                (fromString "role", fromString "user")
+                (B.pack "email", email),
+                (B.pack "uid", B.pack "10"),
+                (B.pack "role", B.pack "user")
             ]
 
 
@@ -28,7 +26,7 @@ decrypt cipher = (>>= parseQueryString) . pkcs7unpad . ecbDecrypt cipher
 
 
 aaa :: Integer -> B.ByteString
-aaa n = B.replicate (fromIntegral n) $ fromIntegral $ ord 'A'
+aaa n = B.replicate (fromIntegral n) 'A'
 
 
 -- So, we've got an oracle function that will take a bytestring and
@@ -65,7 +63,7 @@ main = do
 
     let encrypt' = encrypt cipher
         decrypt' = decrypt cipher
-        adminAlignedInput = B.append (aaa 10) $ pkcs7pad 16 $ fromString "admin"
+        adminAlignedInput = B.append (aaa 10) $ pkcs7pad 16 $ B.pack "admin"
         adminBlock = (!! 1) $ chunksOf 16 $ encrypt' adminAlignedInput
         userBlocks = chunksOf 16 $ encrypt' $ aaa 4
         adminBlocks = init userBlocks ++ [adminBlock]

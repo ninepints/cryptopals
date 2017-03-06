@@ -1,6 +1,5 @@
 module BlockCipher (cbcEncrypt, cbcDecrypt, ctrCombine) where
 
-import Data.Bits (xor)
 import qualified Data.ByteString as B
 
 import Crypto.Cipher.Types (blockSize, ecbEncrypt, ecbDecrypt, BlockCipher)

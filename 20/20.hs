@@ -1,6 +1,6 @@
-import qualified Data.ByteString as B
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BC
 import Data.Foldable (for_)
-import Data.String (fromString)
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, IOMode(ReadMode), openFile)
 
@@ -20,14 +20,14 @@ main = do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
-    let encodedSecrets = map fromString $ lines contents
+    let encodedSecrets = map BC.pack $ lines contents
         Just secrets = sequence $ map base64ToBytes encodedSecrets
 
-        iv = B.replicate 8 0
+        iv = BS.replicate 8 0
         ciphertexts = map (ctrCombine cipher iv) secrets
 
-        minLen = minimum $ map B.length ciphertexts
-        vigenereText = B.concat $ map (B.take minLen) ciphertexts
+        minLen = minimum $ map BS.length ciphertexts
+        vigenereText = BS.concat $ map (BS.take minLen) ciphertexts
 
     for_ (V.guessVigenereKey' vigenereText [fromIntegral minLen]) (\sol -> do
             let key = V.key sol

@@ -1,36 +1,35 @@
-import qualified Data.ByteString as B
-import Data.Char (ord)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BC
 import qualified Data.Map.Strict as Map
-import Data.String (fromString)
 import Text.Printf (printf)
 
 import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (blockSize, ecbEncrypt, BlockCipher)
 
-import qualified ByteFormat
+import ByteFormat (base64ToBytes)
 import Data.Chunkable (chunksOf)
 import Padding (pkcs7pad)
 import Util (randomlyKeyedCipherIO, uniqueness)
 
 
-secret :: B.ByteString
-Just secret = ByteFormat.base64ToBytes $ fromString $ "Um9s" ++
+secret :: BS.ByteString
+Just secret = base64ToBytes $ BC.pack $ "Um9s" ++
     "bGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFp" ++
     "ciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0" ++
     "IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
 
 
-type Oracle = B.ByteString -> B.ByteString
+type Oracle = BS.ByteString -> BS.ByteString
 
 -- | Create an oracle function that appends a secret to the input,
 -- pads the result, then encrypts it all in ECB mode.
 makeOracle :: BlockCipher c => c -> Oracle
-makeOracle cipher input = ecbEncrypt cipher $ pad $ B.append input secret
+makeOracle cipher input = ecbEncrypt cipher $ pad $ BS.append input secret
     where pad = pkcs7pad $ fromIntegral $ blockSize cipher
 
 
-aaa :: Integer -> B.ByteString
-aaa n = B.replicate (fromIntegral n) $ fromIntegral $ ord 'A'
+aaa :: Integer -> BS.ByteString
+aaa n = BC.replicate (fromIntegral n) 'A'
 
 
 findBlockSize :: Oracle -> Integer
@@ -40,9 +39,9 @@ findBlockSize oracle = firstSizeYieldingStaticFirstBlock [1..]
             | x == y && y == z = i
             | otherwise = firstSizeYieldingStaticFirstBlock (j:k:ks)
             where
-                x = B.take (fromIntegral i) $ oracle $ aaa i
-                y = B.take (fromIntegral i) $ oracle $ aaa j
-                z = B.take (fromIntegral i) $ oracle $ aaa k
+                x = BS.take (fromIntegral i) $ oracle $ aaa i
+                y = BS.take (fromIntegral i) $ oracle $ aaa j
+                z = BS.take (fromIntegral i) $ oracle $ aaa k
 
 
 findEcb :: Oracle -> Integer -> Bool
@@ -52,29 +51,30 @@ findEcb oracle blockLength = uniqueness (chunksOf blockLength output) < 1
         output = oracle input
 
 
-findSecret :: Oracle -> Integer -> B.ByteString
-findSecret oracle blockLength = findSecret' oracle blockLength B.empty
+findSecret :: Oracle -> Integer -> BS.ByteString
+findSecret oracle blockLength = findSecret' oracle blockLength BS.empty
 
-findSecret' :: Oracle -> Integer -> B.ByteString -> B.ByteString
+findSecret' :: Oracle -> Integer -> BS.ByteString -> BS.ByteString
 findSecret' oracle blockLength bytesSoFar
     | done = bytesSoFar
-    | otherwise = findSecret' oracle blockLength $ B.snoc bytesSoFar nextByte
+    | otherwise = findSecret' oracle blockLength $ BS.snoc bytesSoFar nextByte
     where
         -- Check if we're done by passing bytesSoFar to the oracle
         doneInput = pkcs7pad blockLength bytesSoFar
-        doneOutput = B.take (B.length doneInput) $ oracle doneInput
-        done = doneOutput == oracle B.empty
+        doneOutput = BS.take (BS.length doneInput) $ oracle doneInput
+        done = doneOutput == oracle BS.empty
 
         -- Build 256 inputs we'll pass to the oracle to identify the next byte
-        numBytesSoFar = fromIntegral $ B.length bytesSoFar
+        numBytesSoFar = fromIntegral $ BS.length bytesSoFar
         prefix = aaa $ blockLength - numBytesSoFar `mod` blockLength - 1
-        inputs = map (B.snoc (B.append prefix bytesSoFar)) [0..255]
+        inputs = map (BS.snoc (BS.append prefix bytesSoFar)) [0..255]
 
         -- Function truncating oracle output to just the blocks of interest
-        truncate = B.take $ B.length $ head inputs
+        truncate = BS.take $ BS.length $ head inputs
 
-        outputMap = Map.fromList $ zip (map (truncate . oracle) inputs) [0..255]
-        referenceOutput = truncate $ oracle prefix
+        getOutput = truncate . oracle
+        outputMap = Map.fromList $ zip (map getOutput inputs) [0..255]
+        referenceOutput = getOutput prefix
         nextByte = outputMap Map.! referenceOutput
 
 

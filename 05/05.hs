@@ -1,17 +1,17 @@
 import Data.Bits (xor)
-import qualified Data.ByteString.Lazy as B
-import Data.String (fromString)
+import qualified Data.ByteString.Char8 as BC
+import qualified Data.ByteString.Lazy as BL
 
-import qualified ByteFormat
+import ByteFormat (bytesToHex)
 
 
-input :: B.ByteString
-input = fromString $
+input :: BL.ByteString
+input = BL.fromStrict $ BC.pack $
     "Burning 'em, if you ain't quick and nimble\n" ++
     "I go crazy when I hear a cymbal"
 
-key :: B.ByteString
-key = B.cycle $ fromString "ICE"
+key :: BL.ByteString
+key = BL.cycle $ BL.fromStrict $ BC.pack "ICE"
 
 main :: IO ()
-main = print $ ByteFormat.bytesToHex $ B.pack $ B.zipWith xor input key
+main = print $ bytesToHex $ BL.pack $ BL.zipWith xor input key

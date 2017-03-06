@@ -1,6 +1,5 @@
-import qualified Data.ByteString as B
-import Data.Char (chr, isSpace, ord)
-import Data.String (fromString)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BC
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, openFile, IOMode(ReadMode))
 
@@ -8,7 +7,7 @@ import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (blockSize, cipherInit)
 import Crypto.Error (CryptoFailable(..))
 
-import qualified ByteFormat
+import ByteFormat (base64ToBytes)
 import BlockCipher (cbcDecrypt)
 
 
@@ -18,16 +17,14 @@ main = do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
-    let joinedContents :: B.ByteString
-        joinedContents = fromString $ filter (not . isSpace) contents
-        Just decodedContents = ByteFormat.base64ToBytes joinedContents
-
-        key = fromString "YELLOW SUBMARINE" :: B.ByteString
-        iv = B.replicate (blockSize cipher) 0
+    let joinedContents = concat $ lines contents
+        Just decodedContents = base64ToBytes $ BC.pack $ joinedContents
+        key = BC.pack "YELLOW SUBMARINE"
+        iv = BS.replicate (blockSize cipher) 0
 
         cipher :: AES128
         CryptoPassed cipher = cipherInit key
         plaintext = cbcDecrypt cipher iv decodedContents
 
-    putStrLn $ map (chr . fromIntegral) $ B.unpack plaintext
+    putStrLn $ BC.unpack plaintext
     hClose handle

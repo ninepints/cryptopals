@@ -1,6 +1,5 @@
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Char8 as B
 import Data.Maybe (catMaybes)
-import Data.String (fromString)
 import Data.Word (Word16)
 import System.Environment (getArgs)
 
@@ -8,7 +7,7 @@ import System.Random.Mersenne (sketchyCtr)
 
 
 plaintext :: B.ByteString
-plaintext = fromString "AAAAAAAAAAAAAA"
+plaintext = B.pack "AAAAAAAAAAAAAA"
 
 
 checkGuess :: B.ByteString -> Word16 -> Maybe (IO ())
@@ -23,5 +22,5 @@ checkGuess ciphertext guess = if plaintext' == plaintext
 main :: IO ()
 main = do
     [arg] <- getArgs
-    let ciphertext = fromString $ read arg :: B.ByteString
+    let ciphertext = B.pack $ read arg
     sequence_ $ catMaybes $ map (checkGuess ciphertext) [minBound..maxBound]
