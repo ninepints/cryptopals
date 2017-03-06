@@ -1,5 +1,5 @@
-import qualified Data.ByteString as B
-import Data.Char (ord)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BC
 import System.Random (newStdGen, random, randomR, RandomGen)
 import Text.Printf (printf)
 
@@ -12,7 +12,7 @@ import Padding (pkcs7pad)
 import Util (randomBytes, randomlyKeyedCipher, uniqueness)
 
 
-ecbOrCbc :: (RandomGen a) => a -> B.ByteString -> (B.ByteString, Bool, a)
+ecbOrCbc :: (RandomGen a) => a -> BS.ByteString -> (BS.ByteString, Bool, a)
 ecbOrCbc gen input = (ciphertext, isCbc, finalGen)
     where
         (prefixLength, gen2) = randomR (5, 10) gen
@@ -28,18 +28,18 @@ ecbOrCbc gen input = (ciphertext, isCbc, finalGen)
         (iv, finalGen) = randomBytes blockLength gen7
 
         encrypt = if isCbc then cbcEncrypt cipher iv else ecbEncrypt cipher
-        plaintext = B.concat [prefix, input, suffix]
+        plaintext = BS.concat [prefix, input, suffix]
         ciphertext = encrypt $ pkcs7pad blockLength plaintext
 
 
-guessIsCbc :: B.ByteString -> Bool
+guessIsCbc :: BS.ByteString -> Bool
 guessIsCbc bytes = not $ uniqueness (chunksOf 16 bytes) < 1
 
 
 testGuess :: IO Bool
 testGuess = do
     gen <- newStdGen
-    let aaa = B.replicate 48 $ fromIntegral $ ord 'A'
+    let aaa = BC.replicate 48 'A'
         (ciphertext, truth, _) = ecbOrCbc gen aaa
         guess = guessIsCbc ciphertext
     putStrLn $ printf "Guessed %v, truth was %v" (show guess) (show truth)

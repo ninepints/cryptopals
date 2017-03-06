@@ -1,5 +1,4 @@
-import qualified Data.ByteString.Lazy as B
-import Data.String (fromString)
+import qualified Data.ByteString.Char8 as B
 import Data.Word (Word32)
 import System.Random (randomIO)
 
@@ -10,7 +9,7 @@ main :: IO ()
 main = do
     seed <- randomIO :: IO Word32
 
-    let plaintext = fromString "Hey here's some plaintext!" :: B.ByteString
+    let plaintext = B.pack "Hey here's some plaintext!"
         ciphertext = sketchyCtr seed plaintext
         plaintext' = sketchyCtr seed ciphertext
 

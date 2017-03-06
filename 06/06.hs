@@ -1,10 +1,8 @@
-import Data.ByteString.Lazy (ByteString)
-import Data.Char (isSpace)
-import Data.String (fromString)
+import Data.ByteString.Char8 (pack)
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, IOMode(ReadMode), openFile)
 
-import qualified ByteFormat
+import ByteFormat (base64ToBytes)
 import qualified Vigenere as V
 
 
@@ -14,9 +12,7 @@ main = do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
-    let joinedContents :: ByteString
-        joinedContents = fromString $ filter (not . isSpace) contents
-        Just decodedContents = ByteFormat.base64ToBytes joinedContents
+    let Just decodedContents = base64ToBytes $ pack $ concat $ lines contents
         candidates = V.guessVigenereKey decodedContents
 
     sequence_ $ map (putStrLn . V.showSolution) candidates

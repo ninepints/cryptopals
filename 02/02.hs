@@ -1,17 +1,14 @@
-import Data.ByteString.Lazy (ByteString)
-import Data.String (fromString)
+import Data.ByteString.Char8 (pack, ByteString)
 
-import qualified ByteFormat
+import ByteFormat (bytesToHex, hexToBytes)
 import Util (xorBytes)
 
 
 input1 :: ByteString
-Just input1 = ByteFormat.hexToBytes $
-    fromString "1c0111001f010100061a024b53535009181c"
+Just input1 = hexToBytes $ pack "1c0111001f010100061a024b53535009181c"
 
 input2 :: ByteString
-Just input2 = ByteFormat.hexToBytes $
-    fromString "686974207468652062756c6c277320657965"
+Just input2 = hexToBytes $ pack "686974207468652062756c6c277320657965"
 
 main :: IO ()
-main = print $ ByteFormat.bytesToHex $ xorBytes input1 input2
+main = print $ bytesToHex $ xorBytes input1 input2

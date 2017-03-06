@@ -1,13 +1,12 @@
-import Data.ByteString.Lazy (ByteString)
+import Data.ByteString.Char8 (pack, ByteString)
 import Data.Function (on)
 import Data.List (sortBy)
 import Data.Maybe (fromJust)
-import Data.String (fromString)
 import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, IOMode(ReadMode), openFile)
 
-import qualified ByteFormat
+import ByteFormat (hexToBytes)
 import qualified Vigenere as V
 
 
@@ -34,11 +33,9 @@ main = do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
-    let splitContents = lines contents
-        decode = fromJust . ByteFormat.hexToBytes . fromString
-        decodedContents = map decode splitContents
-        indexedContents = zip [1..] decodedContents
-        candidates = indexedContents >>= toIndexedCandidates
+    let decodedLines = map (fromJust . hexToBytes . pack) $ lines contents
+        indexedLines = zip [1..] decodedLines
+        candidates = indexedLines >>= toIndexedCandidates
         topCandidates = take 5 $ sortBy indexedCandidateCmp candidates
 
     sequence_ $ map (putStrLn . showIndexedCandidate) topCandidates

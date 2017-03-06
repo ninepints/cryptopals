@@ -1,5 +1,4 @@
-import qualified Data.ByteString.Lazy as B
-import Data.String (fromString)
+import qualified Data.ByteString.Char8 as B
 import Data.Word (Word16)
 import System.Random (randomIO, randomRIO)
 
@@ -18,7 +17,7 @@ main :: IO ()
 main = do
     seed <- randomIO :: IO Word16
 
-    let plaintext = fromString "AAAAAAAAAAAAAA" :: B.ByteString
+    let plaintext = B.pack "AAAAAAAAAAAAAA"
 
     ciphertext <- encrypt seed plaintext
 

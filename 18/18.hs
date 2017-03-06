@@ -1,23 +1,23 @@
-import qualified Data.ByteString as B
-import Data.String (fromString)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BC
 
 import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (cipherInit)
 import Crypto.Error (CryptoFailable(..))
 
-import qualified ByteFormat
+import ByteFormat (base64ToBytes)
 import BlockCipher (ctrCombine)
 
 
-ciphertext :: B.ByteString
-Just ciphertext = ByteFormat.base64ToBytes $ fromString
+ciphertext :: BS.ByteString
+Just ciphertext = base64ToBytes $ BC.pack
     "L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=="
 
-key :: B.ByteString
-key = fromString "YELLOW SUBMARINE"
+key :: BS.ByteString
+key = BC.pack "YELLOW SUBMARINE"
 
-iv :: B.ByteString
-iv = B.replicate 8 0
+iv :: BS.ByteString
+iv = BS.replicate 8 0
 
 cipher :: AES128
 CryptoPassed cipher = cipherInit key

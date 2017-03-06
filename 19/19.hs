@@ -1,5 +1,5 @@
-import qualified Data.ByteString as B
-import Data.String (fromString)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BC
 import System.Environment (getArgs)
 import System.IO (hClose, hGetContents, hSetBuffering, openFile, stdin,
                   BufferMode(NoBuffering), IOMode(ReadMode))
@@ -20,9 +20,9 @@ main = do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
 
-    let encodedSecrets = map fromString $ lines contents
+    let encodedSecrets = map BC.pack $ lines contents
         Just secrets = sequence $ map base64ToBytes encodedSecrets
-        iv = B.replicate 8 0
+        iv = BS.replicate 8 0
         ciphertexts = map (ctrCombine cipher iv) secrets
 
     hSetBuffering stdin NoBuffering
