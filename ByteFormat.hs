@@ -13,11 +13,11 @@ module ByteFormat (
 
 import Control.Monad (guard, liftM2)
 import qualified Data.Map.Strict as Map
-import Data.String (fromString, IsString)
 import Data.Tuple (swap)
 import Data.Word (Word8)
 
 import qualified Data.ByteString.Common as B
+import qualified Data.ByteString.Char8 as BChar
 import Data.Char.IntegralHelpers (ord', toLower', toUpper')
 import Data.Chunkable (chunksOf)
 
@@ -135,16 +135,17 @@ integerToBytes n | n < 0 = error "Input negative"
     where (first, rest) = n `divMod` 256
 
 
-urlEscape :: (B.ByteString a, IsString a) => a -> a
-urlEscape = urlEscapeChars $ fromString "!*'();:@&=+$,/?#[]"
+urlEscape :: B.ByteString a => a -> a
+urlEscape = urlEscapeChars $ B.fromStrict $ BChar.pack "!*'();:@&=+$,/?#[]"
 
 -- | URL-escape the second argument, only replacing bytes that are
 -- present in the first.
-urlEscapeChars :: (B.ByteString a, IsString a) => a -> a -> a
+urlEscapeChars :: B.ByteString a => a -> a -> a
 urlEscapeChars escapeBytes = B.concatMap escape
     where
+        percent = B.fromStrict $ BChar.singleton '%'
         escape byte = if byte `B.elem` escapeBytes
-            then B.append (fromString "%") $ definitelyEscape byte
+            then B.append percent $ definitelyEscape byte
             else B.singleton byte
         definitelyEscape = B.map toUpper' . bytesToHex . B.singleton
 
