@@ -1,7 +1,6 @@
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BC
 import System.Environment (getArgs)
-import System.IO (hClose, hGetContents, openFile, IOMode(ReadMode))
 
 import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (blockSize, cipherInit)
@@ -14,8 +13,7 @@ import BlockCipher (cbcDecrypt)
 main :: IO ()
 main = do
     [filename] <- getArgs
-    handle <- openFile filename ReadMode
-    contents <- hGetContents handle
+    contents <- readFile filename
 
     let joinedContents = concat $ lines contents
         Just decodedContents = base64ToBytes $ BC.pack $ joinedContents
@@ -27,4 +25,3 @@ main = do
         plaintext = cbcDecrypt cipher iv decodedContents
 
     putStrLn $ BC.unpack plaintext
-    hClose handle

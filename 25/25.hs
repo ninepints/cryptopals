@@ -1,7 +1,5 @@
-import Control.DeepSeq (deepseq)
 import qualified Data.ByteString.Char8 as B
 import System.Environment (getArgs)
-import System.IO (hClose, hGetContents, openFile, IOMode(ReadMode))
 
 import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (blockSize, cipherInit, ecbDecrypt)
@@ -16,19 +14,14 @@ import Util (randomBytesIO, randomlyKeyedCipherIO, xorBytes)
 getPlaintext :: IO B.ByteString
 getPlaintext = do
     [filename] <- getArgs
-    handle <- openFile filename ReadMode
-    contents <- hGetContents handle
+    contents <- readFile filename
 
     let Just decodedContents = base64ToBytes $ B.pack $ concat $ lines contents
 
         cipher :: AES128
         CryptoPassed cipher = cipherInit $ B.pack "YELLOW SUBMARINE"
 
-        plaintext = ecbDecrypt cipher decodedContents
-
-    -- Force Haskell to evaluate the plaintext and read the file before closing
-    plaintext `deepseq` hClose handle
-    return plaintext
+    return $ ecbDecrypt cipher decodedContents
 
 
 main :: IO ()

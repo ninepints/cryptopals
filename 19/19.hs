@@ -1,8 +1,7 @@
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BC
 import System.Environment (getArgs)
-import System.IO (hClose, hGetContents, hSetBuffering, openFile, stdin,
-                  BufferMode(NoBuffering), IOMode(ReadMode))
+import System.IO (hSetBuffering, stdin, BufferMode(NoBuffering))
 
 import Crypto.Cipher.AES (AES128)
 
@@ -17,8 +16,7 @@ main = do
     cipher <- randomlyKeyedCipherIO :: IO AES128
 
     [filename] <- getArgs
-    handle <- openFile filename ReadMode
-    contents <- hGetContents handle
+    contents <- readFile filename
 
     let encodedSecrets = map BC.pack $ lines contents
         Just secrets = sequence $ map base64ToBytes encodedSecrets
@@ -31,5 +29,3 @@ main = do
     putStrLn $ "The key is " ++ show keystream
     putStrLn $ "The plaintexts are:"
     sequence_ $ map (print . xorBytesShortest keystream) ciphertexts
-
-    hClose handle
