@@ -1,6 +1,5 @@
 import qualified Data.ByteString.Char8 as B
 import System.Environment (getArgs)
-import System.IO (hClose, hGetContents, openFile, IOMode(ReadMode))
 
 import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (cipherInit, ecbDecrypt)
@@ -12,8 +11,7 @@ import ByteFormat (base64ToBytes)
 main :: IO ()
 main = do
     [filename] <- getArgs
-    handle <- openFile filename ReadMode
-    contents <- hGetContents handle
+    contents <- readFile filename
 
     let Just decodedContents = base64ToBytes $ B.pack $ concat $ lines contents
         key = B.pack "YELLOW SUBMARINE"
@@ -23,4 +21,3 @@ main = do
         plaintext = ecbDecrypt cipher decodedContents
 
     putStrLn $ B.unpack plaintext
-    hClose handle

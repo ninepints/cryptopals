@@ -4,7 +4,6 @@ import Data.List (sortBy)
 import Data.Maybe (fromJust)
 import Data.Word (Word8)
 import System.Environment (getArgs)
-import System.IO (hClose, hGetContents, IOMode(ReadMode), openFile)
 
 import ByteFormat (hexToBytes)
 import qualified Vigenere as V
@@ -30,8 +29,7 @@ showIndexedCandidate c = "Line " ++ show (fst c) ++ ": " ++
 main :: IO ()
 main = do
     [filename] <- getArgs
-    handle <- openFile filename ReadMode
-    contents <- hGetContents handle
+    contents <- readFile filename
 
     let decodedLines = map (fromJust . hexToBytes . pack) $ lines contents
         indexedLines = zip [1..] decodedLines
@@ -39,4 +37,3 @@ main = do
         topCandidates = take 5 $ sortBy indexedCandidateCmp candidates
 
     sequence_ $ map (putStrLn . showIndexedCandidate) topCandidates
-    hClose handle
