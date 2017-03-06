@@ -28,8 +28,7 @@ main :: IO ()
 main = do
     plaintext <- getPlaintext
     cipher <- randomlyKeyedCipherIO :: IO AES128
-    let ivSize = fromIntegral $ blockSize cipher `div` 2
-    iv <- randomBytesIO ivSize :: IO B.ByteString
+    iv <- randomBytesIO $ fromIntegral $ blockSize cipher `div` 2
 
     let ciphertext = ctrCombine cipher iv plaintext
         aaa = B.replicate (B.length ciphertext) 'A'
