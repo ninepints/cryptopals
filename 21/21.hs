@@ -1,7 +1,7 @@
 import Control.Monad.State (evalState, state, State)
 import Data.Word (Word32)
 
-import qualified System.Random.Mersenne as M
+import qualified SpecImplementations.Mersenne as M
 
 
 runFor :: Int -> State M.MersenneGen [Word32]

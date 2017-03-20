@@ -1,6 +1,6 @@
 -- Based on pseudocode from https://en.wikipedia.org/wiki/Mersenne_Twister
 -- (most of these single-letter variable names are on them)
-module System.Random.Mersenne (
+module SpecImplementations.Mersenne (
     seedGen,
     genFromState,
     stateLength,

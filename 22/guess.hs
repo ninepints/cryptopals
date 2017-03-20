@@ -3,7 +3,7 @@ import Data.Word (Word32)
 import System.Environment (getArgs)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 
-import System.Random.Mersenne (next, seedGen)
+import SpecImplementations.Mersenne (next, seedGen)
 
 
 checkGuess :: Word32 -> Word32 -> Maybe (IO ())

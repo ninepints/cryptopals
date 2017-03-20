@@ -3,7 +3,7 @@ import Data.Maybe (catMaybes)
 import Data.Word (Word16)
 import System.Environment (getArgs)
 
-import System.Random.Mersenne (sketchyCtr)
+import SpecImplementations.Mersenne (sketchyCtr)
 
 
 plaintext :: B.ByteString
