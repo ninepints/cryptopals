@@ -2,7 +2,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.Word (Word16)
 import System.Random (randomIO, randomRIO)
 
-import System.Random.Mersenne (sketchyCtr)
+import SpecImplementations.Mersenne (sketchyCtr)
 import Util (randomBytesIO)
 
 
