@@ -25,6 +25,7 @@ class ByteString a where
     map :: (Word8 -> Word8) -> a -> a
     null :: a -> Bool
     pack :: [Word8] -> a
+    replicate :: Integer -> Word8 -> a
     singleton :: Word8 -> a
     split :: Word8 -> a -> [a]
     splitAt :: Integer -> a -> (a, a)
@@ -53,6 +54,7 @@ instance ByteString BS.ByteString where
     map = BS.map
     null = BS.null
     pack = BS.pack
+    replicate = BS.replicate . fromIntegral
     singleton = BS.singleton
     split = BS.split
     splitAt = BS.splitAt . fromIntegral
@@ -81,6 +83,7 @@ instance ByteString BL.ByteString where
     map = BL.map
     null = BL.null
     pack = BL.pack
+    replicate = BL.replicate . fromIntegral
     singleton = BL.singleton
     split = BL.split
     splitAt = BL.splitAt . fromIntegral
