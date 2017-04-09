@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 import Data.ByteString.Char8 (pack, ByteString)
 import Data.Function (on)
 import Data.List (sortBy)
@@ -13,7 +15,7 @@ type IndexedCandidate = (Integer, V.Solution ByteString Word8)
 
 
 toIndexedCandidates :: (Integer, ByteString) -> [IndexedCandidate]
-toIndexedCandidates (i, ciphertext) = map (\can -> (i, can)) candidates
+toIndexedCandidates (i, ciphertext) = map (i,) candidates
     where candidates = V.guessSingleByteKey ciphertext
 
 

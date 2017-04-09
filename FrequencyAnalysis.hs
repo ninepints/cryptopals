@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module FrequencyAnalysis (scoreEnglish) where
 
 import Data.Char (chr, isAscii, isAlpha)
@@ -46,20 +48,19 @@ isEnglishChar = and . sequence [isAlpha, isAscii] . chr . fromIntegral
 -- those that appear after two or more consecutive space characters)
 -- and converting to lowercase.
 normalize :: B.ByteString a => a -> a
-normalize = B.pack . map toLower' . normalizeAfterConsecutiveSpaces 0 . B.unpack
+normalize = B.pack . map toLower' . normAfterConsecutiveSpaces 0 . B.unpack
     where
-        normalizeAfterConsecutiveSpaces _ [] = []
-        normalizeAfterConsecutiveSpaces n (x:xs)
-            | n < 2 && isSpace' x = normalizeAfterConsecutiveSpaces (n + 1) xs
-            | isSpace' x = x : normalizeAfterConsecutiveSpaces n xs
-            | otherwise = x : normalizeAfterConsecutiveSpaces 0 xs
+        normAfterConsecutiveSpaces _ [] = []
+        normAfterConsecutiveSpaces n (x:xs)
+            | n < 2 && isSpace' x = normAfterConsecutiveSpaces (n + 1) xs
+            | isSpace' x = x : normAfterConsecutiveSpaces n xs
+            | otherwise = x : normAfterConsecutiveSpaces 0 xs
 
 
 getFrequencyMap :: B.ByteString a => a -> Map.Map Word8 Double
 getFrequencyMap s = Map.map (/letterTotal) letterCounts
     where
-        -- (\x -> (x, 1)) can be (,1) if compiled with the -XTupleSections flag
-        letterCounts = Map.fromListWith (+) $ map (\x -> (x, 1)) $ B.unpack s
+        letterCounts = Map.fromListWith (+) $ map (,1) $ B.unpack s
         letterTotal = fromIntegral $ B.length s
 
 
