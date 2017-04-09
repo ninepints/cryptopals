@@ -1,98 +1,57 @@
 -- Based on pseudocode from https://en.wikipedia.org/wiki/SHA-1
+
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module SpecImplementations.SHA1 (
     hash,
     initContext,
     buildContext,
     update,
     finalize,
-    pad
+    SHA1(..)
 ) where
 
 import Control.Monad (guard)
 import Data.Array.IArray ((!), array, elems, Array)
 import Data.Bits ((.&.), (.|.), complement, rotateL, shiftL, shiftR, xor)
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as BL
-import Data.List (unfoldr)
-import Data.Maybe (fromMaybe, listToMaybe)
-import Data.Tuple (swap)
 import Data.Word (Word8, Word32)
-import Prelude hiding (init, rem)
 
 import qualified Data.ByteString.Common as BC
 import Data.Chunkable (chunksOf)
+import qualified SpecImplementations.HashCommon as HC
 
 
--- | Hash context, including a count of bytes hashed so far
--- and any "remaining" bytes that have yet to be hashed
-data Context = Context {
-    getState :: State,
-    getByteCount :: Integer,
-    getRemaining :: BL.ByteString
-} deriving Show
-
--- | Raw hash state
+data SHA1 = SHA1 deriving Show
 data State = State Word32 Word32 Word32 Word32 Word32 deriving Show
+type Context = HC.Context State
+
+instance HC.HashImpl SHA1 State where
+    padEndianness _ = HC.BigEndian
+    initState _ = initState
+    updateWithChunk _ = updateWithChunk
+    pack _ = pack
+    unpack _ = unpack
 
 
-hash :: BC.ByteString a => a -> BS.ByteString
-hash = finalize . update initContext
-
+hash :: (BC.ByteString a) => a -> BS.ByteString
+hash = HC.hash SHA1
 
 initContext :: Context
-initContext = Context (State a b c d e) 0 BL.empty
-    where
-        a = 0x67452301
-        b = 0xEFCDAB89
-        c = 0x98BADCFE
-        d = 0x10325476
-        e = 0xC3D2E1F0
+initContext = HC.buildInitContext SHA1
 
+buildContext ::  BS.ByteString -> Integer -> Maybe Context
+buildContext = HC.buildContext SHA1
 
-buildContext :: BS.ByteString -> Integer -> Maybe Context
-buildContext bytes byteCount = do
-    state <- unpack bytes
-    guard $ byteCount >= 0
-    return $ Context state byteCount BL.empty
-
-
-update :: BC.ByteString a => Context -> a -> Context
-update (Context state cnt rem) bytes = drainChunks $ Context state cnt rem'
-    where rem' = BL.append rem $ BL.fromStrict $ BC.toStrict bytes
-
+update :: (BC.ByteString a) => Context -> a -> Context
+update = HC.update SHA1
 
 finalize :: Context -> BS.ByteString
-finalize (Context state cnt rem) = pack $ getState $ drainChunks $ newContext
-    where
-        newContext = Context state undefined $ pad bitCount rem
-        bitCount = 8 * (cnt + fromIntegral (BL.length rem))
+finalize = HC.finalize SHA1
 
 
-pad :: BC.ByteString a => Integer -> a -> a
-pad bitCount bytes = BC.concat parts
-    where
-        parts = [bytes, BC.singleton 128, p1, p2, p3, encodedCnt]
-
-        encodedCnt = BC.pack $ reverse $ unfoldr splitByte bitCount
-        splitByte val = if val > 0
-            then Just $ swap $ fmap fromIntegral $ val `divMod` 256
-            else Nothing
-        p1 =  BC.replicate (8 - BC.length encodedCnt) 0
-
-        chunkMod = 1 + BC.length bytes `mod` 64
-        p2 = BC.replicate (56 - chunkMod) 0
-        p3 = BC.replicate (if chunkMod > 56 then 64 else 0) 0
-
-
-drainChunks :: Context -> Context
-drainChunks (Context state cnt rem) = Context state' cnt' rem'
-    where
-        chunks = chunksOf 64 rem
-        isFull = (== 64) . BL.length
-        (fullChunks, lastChunk) = span isFull chunks
-        state' = foldl updateWithChunk state $ map BL.toStrict fullChunks
-        cnt' = cnt + 64 * (fromIntegral $ length fullChunks)
-        rem' = fromMaybe BL.empty $ listToMaybe lastChunk
+initState :: State
+initState = State 0x67452301 0xefcdab89 0x98badcfe 0x10325476 0xc3d2e1f0
 
 
 updateWithChunk :: State -> BS.ByteString -> State
@@ -117,23 +76,23 @@ updateWithChunk state@(State a b c d e) chunk = newState
 
 
 xform1 :: Word32 -> State -> State
-xform1 subChunk state@(State _ b c d _) = _xform subChunk f 0x5A827999 state
+xform1 subChunk state@(State _ b c d _) = xform' subChunk f 0x5a827999 state
     where f = (b .&. c) .|. ((complement b) .&. d)
 
 xform2 :: Word32 -> State -> State
-xform2 subChunk state@(State _ b c d _) = _xform subChunk f 0x6ED9EBA1 state
+xform2 subChunk state@(State _ b c d _) = xform' subChunk f 0x6ed9eba1 state
     where f = b `xor` c `xor` d
 
 xform3 :: Word32 -> State -> State
-xform3 subChunk state@(State _ b c d _) = _xform subChunk f 0x8F1BBCDC state
+xform3 subChunk state@(State _ b c d _) = xform' subChunk f 0x8f1bbcdc state
     where f = (b .&. c) .|. (b .&. d) .|. (c .&. d)
 
 xform4 :: Word32 -> State -> State
-xform4 subChunk state@(State _ b c d _) = _xform subChunk f 0xCA62C1D6 state
+xform4 subChunk state@(State _ b c d _) = xform' subChunk f 0xca62c1d6 state
     where f = b `xor` c `xor` d
 
-_xform :: Word32 -> Word32 -> Word32 -> State -> State
-_xform subChunk f k (State a b c d e) = State a' b' c' d' e'
+xform' :: Word32 -> Word32 -> Word32 -> State -> State
+xform' subChunk f k (State a b c d e) = State a' b' c' d' e'
     where
         a' = (a `rotateL` 5) + e + subChunk + f + k
         b' = a
@@ -167,4 +126,3 @@ concatBytes [w, x, y, z] = fromIntegral z +
     fromIntegral y `shiftL` 8 +
     fromIntegral x `shiftL` 16 +
     fromIntegral w `shiftL` 24
-

@@ -26,6 +26,7 @@ class ByteString a where
     null :: a -> Bool
     pack :: [Word8] -> a
     replicate :: Integer -> Word8 -> a
+    reverse :: a -> a
     singleton :: Word8 -> a
     split :: Word8 -> a -> [a]
     splitAt :: Integer -> a -> (a, a)
@@ -55,6 +56,7 @@ instance ByteString BS.ByteString where
     null = BS.null
     pack = BS.pack
     replicate = BS.replicate . fromIntegral
+    reverse = BS.reverse
     singleton = BS.singleton
     split = BS.split
     splitAt = BS.splitAt . fromIntegral
@@ -84,6 +86,7 @@ instance ByteString BL.ByteString where
     null = BL.null
     pack = BL.pack
     replicate = BL.replicate . fromIntegral
+    reverse = BL.reverse
     singleton = BL.singleton
     split = BL.split
     splitAt = BL.splitAt . fromIntegral
