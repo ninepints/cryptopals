@@ -34,7 +34,7 @@ instance HC.HashImpl MD4 State where
     unpack _ = unpack
 
 
-hash :: (BC.ByteString a) => a -> BS.ByteString
+hash :: BC.ByteString a => a -> BS.ByteString
 hash = HC.hash MD4
 
 initContext :: Context
@@ -43,7 +43,7 @@ initContext = HC.buildInitContext MD4
 buildContext ::  BS.ByteString -> Integer -> Maybe Context
 buildContext = HC.buildContext MD4
 
-update :: (BC.ByteString a) => Context -> a -> Context
+update :: BC.ByteString a => Context -> a -> Context
 update = HC.update MD4
 
 finalize :: Context -> BS.ByteString

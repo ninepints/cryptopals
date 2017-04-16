@@ -49,11 +49,11 @@ hash :: (HashImpl h a, BC.ByteString b) => h -> b -> BS.ByteString
 hash impl = finalize impl . update impl (buildInitContext impl)
 
 
-buildInitContext :: (HashImpl h a) => h -> Context a
+buildInitContext :: HashImpl h a => h -> Context a
 buildInitContext impl = Context (initState impl) 0 BL.empty
 
 
-buildContext :: (HashImpl h a) =>
+buildContext :: HashImpl h a =>
     h -> BS.ByteString -> Integer -> Maybe (Context a)
 buildContext impl bytes byteCount = do
     state <- unpack impl bytes
@@ -68,7 +68,7 @@ update impl (Context state cnt rem) bytes = drainChunks impl newContext
         newContext = Context state cnt rem'
 
 
-finalize :: (HashImpl h a) => h -> Context a -> BS.ByteString
+finalize :: HashImpl h a => h -> Context a -> BS.ByteString
 finalize impl (Context state cnt rem) = pack impl finalState
     where
         bitCount = 8 * (cnt + fromIntegral (BL.length rem))
@@ -80,7 +80,7 @@ finalize impl (Context state cnt rem) = pack impl finalState
 -- | If the given context includes 64 or more unhashed bytes,
 -- updates the enclosed state with successive chunks of 64 bytes.
 -- Returns a context with fewer than 64 unhashed bytes.
-drainChunks :: (HashImpl h a) => h -> Context a -> Context a
+drainChunks :: HashImpl h a => h -> Context a -> Context a
 drainChunks impl (Context state cnt rem) = Context state' cnt' rem'
     where
         chunks = chunksOf 64 rem

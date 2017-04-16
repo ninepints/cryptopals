@@ -34,7 +34,7 @@ instance HC.HashImpl SHA1 State where
     unpack _ = unpack
 
 
-hash :: (BC.ByteString a) => a -> BS.ByteString
+hash :: BC.ByteString a => a -> BS.ByteString
 hash = HC.hash SHA1
 
 initContext :: Context
@@ -43,7 +43,7 @@ initContext = HC.buildInitContext SHA1
 buildContext ::  BS.ByteString -> Integer -> Maybe Context
 buildContext = HC.buildContext SHA1
 
-update :: (BC.ByteString a) => Context -> a -> Context
+update :: BC.ByteString a => Context -> a -> Context
 update = HC.update SHA1
 
 finalize :: Context -> BS.ByteString

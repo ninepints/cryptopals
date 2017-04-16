@@ -148,4 +148,3 @@ urlEscapeChars escapeBytes = B.concatMap escape
             then B.append percent $ definitelyEscape byte
             else B.singleton byte
         definitelyEscape = B.map toUpper' . bytesToHex . B.singleton
-
