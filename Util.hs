@@ -43,6 +43,7 @@ xorBytes x y
 xorBytesShortest :: B.ByteString a => a -> a -> a
 xorBytesShortest x y = B.pack $ B.zipWith xor x y
 
+
 -- | Generate a random bytestring of the specified length. This is
 -- NOT CRYPTOGRAPHICALLY SECURE. (Haskell appears to lack a built-in
 -- CSPRNG. TODO: find a library for that.)
