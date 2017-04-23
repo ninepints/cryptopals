@@ -4,7 +4,7 @@ import qualified Data.ByteString as B
 
 import Crypto.Cipher.Types (blockSize, ecbEncrypt, ecbDecrypt, BlockCipher)
 
-import qualified ByteFormat
+import ByteFormat (integerToBytes)
 import qualified Data.Chunkable as C
 import Padding (constantPad)
 import Util (xorBytes)
@@ -59,7 +59,8 @@ ctrCombine cipher iv input
         (d, r) = B.length input `divMod` blockSize cipher
         keyBlocks = fromIntegral $ d + if r == 0 then 0 else 1
         ctrSize = fromIntegral $ blockSize cipher `div` 2
-        ctrVals = map ByteFormat.integerToBytes [0..keyBlocks-1]
-        ctrVals' = map (constantPad ctrSize 0 . B.reverse) ctrVals
-        keystream = B.concat $ map (ecbEncrypt cipher . B.append iv) ctrVals'
+
+        toCtrVal = constantPad ctrSize 0 . B.reverse . integerToBytes
+        ctrVals = map toCtrVal [0..keyBlocks-1]
+        keystream = B.concat $ map (ecbEncrypt cipher . B.append iv) ctrVals
 
