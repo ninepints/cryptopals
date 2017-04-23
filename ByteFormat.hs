@@ -126,13 +126,18 @@ bytesToBase64 bytes = B.pack base64Chars
 -- >>> integerToBytes 24936
 -- "ah"
 -- >>> integerToBytes 0
--- ""
+-- "\NUL"
 integerToBytes :: B.ByteString a => Integer -> a
 integerToBytes n | n < 0 = error "Input negative"
-                 | n == 0 = B.empty
-                 | n < 256 = B.singleton $ fromIntegral n
-                 | otherwise = B.cons (fromIntegral first) $ integerToBytes rest
-    where (first, rest) = n `divMod` 256
+                 | n == 0 = B.singleton 0
+                 | otherwise = integerToBytes' n
+    where integerToBytes' m
+            | m == 0 = B.empty
+            | m < 256 = B.singleton $ fromIntegral m
+            | otherwise = B.cons firstConv $ integerToBytes' rest
+            where
+                (first, rest) = m `divMod` 256
+                firstConv = fromIntegral first
 
 
 urlEscape :: B.ByteString a => a -> a
