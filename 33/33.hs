@@ -24,17 +24,17 @@ testKeyExchange p g = do
     putStrLn $ "p = " ++ show p
     putStrLn $ "g = " ++ show g
 
-    a <- randomRIO (0, (p-1))
-    putStrLn $ "a = " ++ show a
-    b <- randomRIO (0, (p-1))
-    putStrLn $ "b = " ++ show b
+    aPriv <- randomRIO (0, (p-1))
+    putStrLn $ "aPriv = " ++ show aPriv
+    bPriv <- randomRIO (0, (p-1))
+    putStrLn $ "bPriv = " ++ show bPriv
 
-    let aPub = expMod g a p
-        bPub = expMod g b p
-        secretA = expMod bPub a p
-        secretB = expMod aPub b p
+    let aPub = expMod g aPriv p
+        bPub = expMod g bPriv p
+        sA = expMod bPub aPriv p
+        sB = expMod aPub bPriv p
 
     putStrLn $ "aPub = " ++ show aPub
     putStrLn $ "bPub = " ++ show bPub
-    putStrLn $ "secretA = " ++ show secretA
-    putStrLn $ "secretB = " ++ show secretB
+    putStrLn $ "sA = " ++ show sA
+    putStrLn $ "sB = " ++ show sB
