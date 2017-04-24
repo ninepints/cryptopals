@@ -10,7 +10,8 @@ module Util (
     parseQueryString,
     buildQueryString,
     mode,
-    getOnly
+    getOnly,
+    expMod
 ) where
 
 import Control.Monad (guard)
@@ -129,3 +130,12 @@ mode xs = fst $ maximumBy (compare `on` snd) $ Map.toList counter
 getOnly :: [a] -> a
 getOnly [x] = x
 getOnly xs = error $ printf "%d elements in list (expected 1)" $ length xs
+
+
+-- | Calculates (x to the power of y) mod z.
+expMod :: Integer -> Integer -> Integer -> Integer
+expMod x y z | y < 0 = error "Negative exponent"
+             | y == 0 = 1 `mod` z
+             | y == 1 = x `mod` z
+             | even y = let w = expMod x (y `div` 2) z `mod` z in w * w `mod` z
+             | otherwise = x * expMod x (y-1) z `mod` z
