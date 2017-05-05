@@ -4,12 +4,12 @@ import System.Random (randomRIO)
 import Crypto.Cipher.AES (AES128)
 import Crypto.Cipher.Types (cipherInit)
 import Crypto.Error (CryptoFailable(..))
+import Crypto.Hash.Algorithms (SHA1(..))
 
 import BlockCipher (cbcEncrypt, cbcDecrypt)
 import ByteFormat (integerToBytes)
 import Padding (constantPad, pkcs7pad)
-import qualified SpecImplementations.SHA1 as SHA1
-import Util (expMod, randomBytesIO)
+import Util (expMod, hash, randomBytesIO)
 
 
 p :: Integer
@@ -36,7 +36,7 @@ main = do
         sM = 0
 
         padToLengthOfP = constantPad 192 0 :: B.ByteString -> B.ByteString
-        getKey = B.take 16 . SHA1.hash . padToLengthOfP . integerToBytes
+        getKey = B.take 16 . hash SHA1 . padToLengthOfP . integerToBytes
 
         CryptoPassed cipherA = cipherInit $ getKey sA :: CryptoFailable AES128
         CryptoPassed cipherB = cipherInit $ getKey sB :: CryptoFailable AES128
