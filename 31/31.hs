@@ -11,6 +11,8 @@ import System.Environment (getArgs)
 import System.IO.Unsafe (unsafeInterleaveIO)
 import Text.Printf (printf)
 
+import Crypto.Hash.Algorithms (SHA1(..))
+import Crypto.Hash.IO (hashDigestSize)
 import Network.Http.Client (get, getStatusCode, Response)
 import System.IO.Streams.Internal (InputStream)
 
@@ -25,11 +27,15 @@ main = do
     guessAllBytes requestsPerGuess B.empty
 
 
+hmacSize :: Int
+hmacSize = hashDigestSize SHA1
+
+
 guessAllBytes :: Integer -> B.ByteString -> IO ()
 guessAllBytes requestsPerGuess bytesSoFar = unless done $ do
     bytesSoFar' <- guessNextByte requestsPerGuess bytesSoFar
     guessAllBytes requestsPerGuess bytesSoFar'
-    where done = B.length bytesSoFar >= 20
+    where done = B.length bytesSoFar >= hmacSize
 
 
 guessNextByte :: Integer -> B.ByteString -> IO B.ByteString
@@ -74,9 +80,11 @@ guessNextByte requestsPerGuess bytesSoFar = do
 
 
 timeRequest :: B.ByteString -> IO (Integer, Integer)
-timeRequest hashPrefix = do
-    let hashFormatted = bytesToHex $ constantPad 20 0 $ hashPrefix
-        url = B.append (BC.pack "http://127.0.0.1:8000/?hash=") hashFormatted
+timeRequest hmacPrefix = do
+    let pad = constantPad (fromIntegral hmacSize) 0
+        hmacFormatted = bytesToHex $ pad hmacPrefix
+        urlPrefix = BC.pack "http://127.0.0.1:8000/?message=hello!&hmac="
+        url = B.append urlPrefix hmacFormatted
     start <- getPOSIXTime
     statusCode <- get url returnStatusCode
     end <- getPOSIXTime

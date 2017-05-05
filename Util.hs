@@ -11,7 +11,8 @@ module Util (
     buildQueryString,
     mode,
     getOnly,
-    expMod
+    expMod,
+    hash
 ) where
 
 import Control.Monad (guard)
@@ -30,6 +31,8 @@ import Text.Printf (printf)
 import Crypto.Cipher.Types (cipherKeySize, cipherInit,
                             Cipher, KeySizeSpecifier(..))
 import Crypto.Error (CryptoFailable(..))
+import Crypto.Hash (hashWith, HashAlgorithm)
+import qualified Data.ByteArray as BA
 
 import ByteFormat (urlEscape)
 
@@ -139,3 +142,8 @@ expMod x y z | y < 0 = error "Negative exponent"
              | y == 1 = x `mod` z
              | even y = let w = expMod x (y `div` 2) z `mod` z in w * w `mod` z
              | otherwise = x * expMod x (y-1) z `mod` z
+
+
+-- | Wrapper for hashing something with cryptonite
+hash :: (HashAlgorithm h, B.ByteString a) => h -> a -> a
+hash alg = B.pack . BA.unpack . hashWith alg . B.toStrict
