@@ -16,6 +16,7 @@ class ByteString a where
     elem :: Word8 -> a -> Bool
     empty :: a
     filter :: (Word8 -> Bool) -> a -> a
+    foldl :: (b -> Word8 -> b) -> b -> a -> b
     fromStrict :: BS.ByteString -> a
     head :: a -> Word8
     index :: a -> Integer -> Word8
@@ -46,6 +47,7 @@ instance ByteString BS.ByteString where
     elem = BS.elem
     empty = BS.empty
     filter = BS.filter
+    foldl = BS.foldl
     fromStrict = id
     head = BS.head
     index a i = BS.index a $ fromIntegral i
@@ -76,6 +78,7 @@ instance ByteString BL.ByteString where
     elem = BL.elem
     empty = BL.empty
     filter = BL.filter
+    foldl = BL.foldl
     fromStrict = BL.fromStrict
     head = BL.head
     index a i = BL.index a $ fromIntegral i
