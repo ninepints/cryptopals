@@ -7,6 +7,7 @@ module ByteFormat (
     base64ToBytes,
     bytesToBase64,
     integerToBytes,
+    bytesToInteger,
     urlEscape,
     urlEscapeChars
 ) where
@@ -138,6 +139,10 @@ integerToBytes n | n < 0 = error "Input negative"
             where
                 (first, rest) = m `divMod` 256
                 firstConv = fromIntegral first
+
+
+bytesToInteger :: B.ByteString a => a -> Integer
+bytesToInteger = B.foldl (\acc byte -> 256 * acc + fromIntegral byte) 0
 
 
 urlEscape :: B.ByteString a => a -> a

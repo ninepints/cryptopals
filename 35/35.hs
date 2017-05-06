@@ -1,5 +1,5 @@
-import Control.Monad (forM_)
 import qualified Data.ByteString.Char8 as B
+import Data.Foldable (for_)
 import System.Random (randomRIO)
 
 import Crypto.Cipher.AES (AES128)
@@ -24,7 +24,7 @@ p = read $
 
 
 main :: IO ()
-main = forM_ [1, p, p - 1] doKeyExchange
+main = for_ [1, p, p - 1] doKeyExchange
 
 
 doKeyExchange :: Integer -> IO ()
@@ -74,10 +74,10 @@ doKeyExchange g = do
 
     putStrLn $ "A's message to B: " ++ show encryptedMessageA
     putStrLn $ "...decrypted by B: " ++ show decryptedMessageAB
-    forM_ decryptedMessageAM $ (\x ->
+    for_ decryptedMessageAM $ (\x ->
         putStrLn $ "...decrypted by M: " ++ show x)
 
     putStrLn $ "B's response to A: " ++ show encryptedMessageB
     putStrLn $ "...decrypted by A: " ++ show decryptedMessageBA
-    forM_ decryptedMessageBM $ (\x ->
+    for_ decryptedMessageBM $ (\x ->
         putStrLn $ "...decrypted by M: " ++ show x)
