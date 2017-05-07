@@ -3,6 +3,8 @@ module Util (
     xorBytesShortest,
     randomBytes,
     randomBytesIO,
+    randomChoice,
+    randomChoiceIO,
     randomlyKeyedCipher,
     randomlyKeyedCipherIO,
     hammingDistance,
@@ -25,7 +27,7 @@ import Data.List (maximumBy)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.String (fromString, IsString)
-import System.Random (getStdRandom, random, RandomGen)
+import System.Random (getStdRandom, random, randomR, RandomGen)
 import Text.Printf (printf)
 
 import Crypto.Cipher.Types (cipherKeySize, cipherInit,
@@ -67,6 +69,18 @@ randomBytes i gen | i < 0 = error "Length negative"
 -- NOT CRYPTOGRAPHICALLY SECURE.
 randomBytesIO :: B.ByteString a => Integer -> IO a
 randomBytesIO = getStdRandom . randomBytes
+
+
+-- | Return a random element from a list.
+randomChoice :: RandomGen g => [a] -> g -> (a, g)
+randomChoice xs gen | null xs = error "Empty list"
+                    | otherwise = (xs !! index, gen')
+    where (index, gen') = randomR (0, length xs - 1) gen
+
+-- | Return a random element from a list.
+randomChoiceIO :: [a] -> IO a
+randomChoiceIO = getStdRandom . randomChoice
+
 
 -- | Generate a randomly keyed block cipher.
 -- NOT CRYPTOGRAPHICALLY SECURE.
