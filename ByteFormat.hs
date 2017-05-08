@@ -131,14 +131,9 @@ bytesToBase64 bytes = B.pack base64Chars
 integerToBytes :: B.ByteString a => Integer -> a
 integerToBytes n | n < 0 = error "Input negative"
                  | n == 0 = B.singleton 0
-                 | otherwise = integerToBytes' n
-    where integerToBytes' m
-            | m == 0 = B.empty
-            | m < 256 = B.singleton $ fromIntegral m
-            | otherwise = B.cons firstConv $ integerToBytes' rest
-            where
-                (first, rest) = m `divMod` 256
-                firstConv = fromIntegral first
+                 | otherwise = B.reverse $ B.unfoldr splitByte n
+    where splitByte m = guard (m > 0) >> return pair
+            where pair = swap $ fmap fromIntegral $ m `divMod` 256
 
 
 bytesToInteger :: B.ByteString a => a -> Integer

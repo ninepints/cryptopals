@@ -3,7 +3,7 @@ module Data.ByteString.Common where
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Word (Word8)
-import Prelude (($), (.), fromIntegral, id, Bool, Integer)
+import Prelude (($), (.), fromIntegral, id, Bool, Integer, Maybe)
 import qualified Prelude as P
 
 
@@ -35,6 +35,7 @@ class ByteString a where
     take :: Integer -> a -> a
     toStrict :: a -> BS.ByteString
     transpose :: [a] -> [a]
+    unfoldr :: (b -> Maybe (Word8, b)) -> b -> a
     unpack :: a -> [Word8]
     zipWith :: (Word8 -> Word8 -> b) -> a -> a -> [b]
 
@@ -66,6 +67,7 @@ instance ByteString BS.ByteString where
     take = BS.take . fromIntegral
     toStrict = id
     transpose = BS.transpose
+    unfoldr = BS.unfoldr
     unpack = BS.unpack
     zipWith = BS.zipWith
 
@@ -97,6 +99,7 @@ instance ByteString BL.ByteString where
     take = BL.take . fromIntegral
     toStrict = BL.toStrict
     transpose = BL.transpose
+    unfoldr = BL.unfoldr
     unpack = BL.unpack
     zipWith = BL.zipWith
 
