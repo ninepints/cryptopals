@@ -7,6 +7,7 @@ module Util (
     randomChoiceIO,
     randomlyKeyedCipher,
     randomlyKeyedCipherIO,
+    randomPrimeIO,
     hammingDistance,
     uniqueness,
     parseQueryString,
@@ -14,6 +15,8 @@ module Util (
     mode,
     getOnly,
     expMod,
+    extGcd,
+    modInv,
     hash
 ) where
 
@@ -27,6 +30,7 @@ import Data.List (maximumBy)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.String (fromString, IsString)
+import System.Process (readProcess)
 import System.Random (getStdRandom, random, randomR, RandomGen)
 import Text.Printf (printf)
 
@@ -99,6 +103,12 @@ randomlyKeyedCipherIO :: Cipher a => IO a
 randomlyKeyedCipherIO = getStdRandom randomlyKeyedCipher
 
 
+-- | Uses OpenSSL to generate a random prime with the given bit count.
+randomPrimeIO :: Integer -> IO Integer
+randomPrimeIO bits = fmap read $ readProcess "openssl" args []
+    where args = ["prime", "-generate", "-bits", show bits]
+
+
 -- | Compute the Hamming distance (number of differing bits) between
 -- two ByteStrings of equal length.
 hammingDistance :: B.ByteString a => a -> a -> Integer
@@ -156,6 +166,29 @@ expMod x y z | y < 0 = error "Negative exponent"
              | y == 1 = x `mod` z
              | even y = let w = expMod x (y `div` 2) z `mod` z in w * w `mod` z
              | otherwise = x * expMod x (y-1) z `mod` z
+
+
+-- | Calculates the GCD d >= 1 of two integers a and b, plus
+-- coefficients x and y such that xa + yb = d. Returns tuple (d, x, y).
+extGcd :: Integer -> Integer -> (Integer, Integer, Integer)
+extGcd a b = extGcd' 0 1 1 0 (abs b) (abs a)
+    where extGcd' s sOld t tOld r rOld = if r == 0
+            then (rOld, signum a * sOld, signum b * tOld)
+            else extGcd' sNew s tNew t rNew r
+            where
+                (quotient, rNew) = rOld `divMod` r
+                sNew = sOld - quotient * s
+                tNew = tOld - quotient * t
+
+
+-- | Calculates the modular multiplicative inverse of an integer
+-- relative to a coprime modulus.
+modInv :: Integer -> Integer -> Integer
+modInv a m | d /= 1 = error errorMsg
+           | otherwise = x `mod` m
+    where
+        errorMsg = "Modular multiplicative inverse requires coprime integers"
+        (d, x, _) = extGcd a m
 
 
 -- | Wrapper for hashing something with cryptonite
