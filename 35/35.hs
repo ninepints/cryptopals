@@ -9,7 +9,7 @@ import Crypto.Hash.Algorithms (SHA1(..))
 
 import BlockCipher (cbcEncrypt, cbcDecrypt)
 import ByteFormat (integerToBytes)
-import Padding (constantPad, pkcs7pad)
+import Padding (pkcs7pad)
 import Util (expMod, hash, randomBytesIO)
 
 
@@ -47,8 +47,7 @@ doKeyExchange g = do
             x | x == p -> ([0], [0])
             x | x == p - 1 -> ([1, p - 1], [1, p - 1])
 
-        padToLengthOfP = constantPad 192 0 :: B.ByteString -> B.ByteString
-        getKey = B.take 16 . hash SHA1 . padToLengthOfP . integerToBytes
+        getKey = B.take 16 . hash SHA1 . integerToBytes
         unwrap (CryptoPassed x) = x :: AES128
 
         cipherA = unwrap $ cipherInit $ getKey sA
