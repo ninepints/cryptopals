@@ -6,7 +6,6 @@ import Crypto.Hash.Algorithms (SHA256(..))
 
 import ByteFormat (bytesToInteger, integerToBytes)
 import HMAC (hmac)
-import Padding (constantPad)
 import Util (expMod, hash, randomBytesIO)
 
 
@@ -74,6 +73,5 @@ fromBytes :: B.ByteString -> Integer
 fromBytes = bytesToInteger
 
 toBytes :: Integer -> B.ByteString
-toBytes = hash SHA256 . padToLengthOfP . integerToBytes
-    where padToLengthOfP = constantPad 192 0
+toBytes = hash SHA256 . integerToBytes
 
