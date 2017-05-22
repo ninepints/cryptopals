@@ -10,9 +10,11 @@ import qualified Prelude as P
 class ByteString a where
     all :: (Word8 -> Bool) -> a -> Bool
     append :: a -> a -> a
+    break :: (Word8 -> Bool) -> a -> (a, a)
     concat :: [a] -> a
     concatMap :: (Word8 -> a) -> a -> a
     cons :: Word8 -> a -> a
+    dropWhile :: (Word8 -> Bool) -> a -> a
     elem :: Word8 -> a -> Bool
     empty :: a
     filter :: (Word8 -> Bool) -> a -> a
@@ -31,6 +33,7 @@ class ByteString a where
     singleton :: Word8 -> a
     split :: Word8 -> a -> [a]
     splitAt :: Integer -> a -> (a, a)
+    stripPrefix :: a -> a -> Maybe a
     tail :: a -> a
     take :: Integer -> a -> a
     toStrict :: a -> BS.ByteString
@@ -42,9 +45,11 @@ class ByteString a where
 instance ByteString BS.ByteString where
     all = BS.all
     append = BS.append
+    break = BS.break
     concat = BS.concat
     concatMap = BS.concatMap
     cons = BS.cons
+    dropWhile = BS.dropWhile
     elem = BS.elem
     empty = BS.empty
     filter = BS.filter
@@ -63,6 +68,7 @@ instance ByteString BS.ByteString where
     singleton = BS.singleton
     split = BS.split
     splitAt = BS.splitAt . fromIntegral
+    stripPrefix = BS.stripPrefix
     tail = BS.tail
     take = BS.take . fromIntegral
     toStrict = id
@@ -74,9 +80,11 @@ instance ByteString BS.ByteString where
 instance ByteString BL.ByteString where
     all = BL.all
     append = BL.append
+    break = BL.break
     concat = BL.concat
     concatMap = BL.concatMap
     cons = BL.cons
+    dropWhile = BL.dropWhile
     elem = BL.elem
     empty = BL.empty
     filter = BL.filter
@@ -95,6 +103,7 @@ instance ByteString BL.ByteString where
     singleton = BL.singleton
     split = BL.split
     splitAt = BL.splitAt . fromIntegral
+    stripPrefix = BL.stripPrefix
     tail = BL.tail
     take = BL.take . fromIntegral
     toStrict = BL.toStrict

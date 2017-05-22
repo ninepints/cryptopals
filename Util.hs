@@ -1,6 +1,7 @@
 module Util (
     xorBytes,
     xorBytesShortest,
+    finiteRandoms,
     randomBytes,
     randomBytesIO,
     randomChoice,
@@ -31,7 +32,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.String (fromString, IsString)
 import System.Process (readProcess)
-import System.Random (getStdRandom, random, randomR, RandomGen)
+import System.Random (getStdRandom, random, randomR, Random, RandomGen)
 import Text.Printf (printf)
 
 import Crypto.Cipher.Types (cipherKeySize, cipherInit,
@@ -54,19 +55,23 @@ xorBytesShortest :: B.ByteString a => a -> a -> a
 xorBytesShortest x y = B.pack $ B.zipWith xor x y
 
 
+-- | Given a generator, return a finite list with randomly generated
+-- contents, along with the final generator state.
+finiteRandoms :: (Random a, RandomGen g) =>
+    (g -> (a, g)) -> Integer -> g -> ([a], g)
+finiteRandoms _ n _ | n < 0 = error "Length negative"
+finiteRandoms _ 0 gen = ([], gen)
+finiteRandoms genToElem n gen = (x:xs, gen'')
+    where
+        (x, gen') = genToElem gen
+        (xs, gen'') = finiteRandoms genToElem (n-1) gen'
+
+
 -- | Generate a random bytestring of the specified length. This is
 -- NOT CRYPTOGRAPHICALLY SECURE. (Haskell appears to lack a built-in
 -- CSPRNG. TODO: find a library for that.)
 randomBytes :: (RandomGen g, B.ByteString a) => Integer -> g -> (a, g)
-randomBytes i gen | i < 0 = error "Length negative"
-                  | otherwise = (B.pack bytes, gen')
-    where
-        (bytes, gen') = randomBytes' i gen
-        randomBytes' 0 currentGen = ([], currentGen)
-        randomBytes' j currentGen = (byte : remainingBytes, finalGen)
-            where
-                (byte, nextGen) = random currentGen
-                (remainingBytes, finalGen) = randomBytes' (j - 1) nextGen
+randomBytes = (fmap . fmap) (\(a, g) -> (B.pack a, g)) $ finiteRandoms random
 
 
 -- | Generate a random bytestring of the specified length.

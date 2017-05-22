@@ -15,7 +15,7 @@ e = 3
 
 
 blockSize :: Int
-blockSize = 192
+blockSize = 192  -- In practice this should be larger
 
 
 -- Magic bytes that mean we used a SHA256 hash, according to RFC3447
