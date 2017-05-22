@@ -17,20 +17,20 @@ e = 3
 
 
 plaintextOdd :: Integer -> Integer -> Integer -> Bool
-plaintextOdd d n ciphertext = odd $ B.last $ integerToBytes $
+plaintextOdd n d ciphertext = odd $ B.last $ integerToBytes $
     expMod ciphertext d n
 
 
 main :: IO ()
 main = do
-    (p, q) <- (,) <$> randomPrimeIO 1024 <*> randomPrimeIO 1024
+    (p, q) <- (,) <$> randomPrimeIO 512 <*> randomPrimeIO 512
 
     let n = p * q
         et = (p-1) * (q-1)
         d = modInv e et
         ciphertext = expMod (bytesToInteger secret) e n
 
-    findPlaintext n (plaintextOdd d n) ciphertext
+    findPlaintext n (plaintextOdd n d) ciphertext
 
 
 -- On each iteration, multiply the ciphertext by 2^(iter count) and
