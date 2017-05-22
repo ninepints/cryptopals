@@ -8,7 +8,7 @@ import Crypto.Hash.Algorithms (SHA1(..))
 
 import BlockCipher (cbcEncrypt, cbcDecrypt)
 import ByteFormat (integerToBytes)
-import Padding (constantPad, pkcs7pad)
+import Padding (pkcs7pad)
 import Util (expMod, hash, randomBytesIO)
 
 
@@ -35,8 +35,7 @@ main = do
         sB = expMod p bPriv p
         sM = 0
 
-        padToLengthOfP = constantPad 192 0 :: B.ByteString -> B.ByteString
-        getKey = B.take 16 . hash SHA1 . padToLengthOfP . integerToBytes
+        getKey = B.take 16 . hash SHA1 . integerToBytes
 
         CryptoPassed cipherA = cipherInit $ getKey sA :: CryptoFailable AES128
         CryptoPassed cipherB = cipherInit $ getKey sB :: CryptoFailable AES128
