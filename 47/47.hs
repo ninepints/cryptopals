@@ -21,7 +21,7 @@ paddingValid n k d ciphertext = B.isPrefixOf (B.pack [0, 2]) $
 
 main :: IO ()
 main = do
-    (p, q) <- (,) <$> randomPrimeIO 128 <*> randomPrimeIO 128
+    (p, q) <- (,) <$> randomPrimeIO 384 <*> randomPrimeIO 384
 
     let n = p * q
         et = (p-1) * (q-1)
@@ -41,8 +41,9 @@ main = do
 
 findPlaintext :: Integer -> Integer ->
     (Integer -> Bool) -> Integer -> IO Integer
-findPlaintext n k oracle ciphertext = find 1 ciphertext [(2*b, 3*b - 1)]
+findPlaintext n k oracle ciphertext = find s0 undefined [(2*b, 3*b - 1)]
     where
+        s0 = 1 :: Integer
         b = 2 ^ (8 * (k - 2))
 
         combineIntervals = doCombine . doSort . filterEmpty
@@ -74,7 +75,6 @@ findPlaintext n k oracle ciphertext = find 1 ciphertext [(2*b, 3*b - 1)]
                 putStrLn $ "Found s " ++ show s'
                 find (i+1) s' intervals'
 
-        find :: Integer -> Integer -> [(Integer, Integer)] -> IO Integer
         find _ _ [(l,u)] | u == l = return l
         find i@1 _ intervals = recurseOnCandidates i intervals cs
             where cs = [n `div` (3 * b) ..]
@@ -82,6 +82,4 @@ findPlaintext n k oracle ciphertext = find 1 ciphertext [(2*b, 3*b - 1)]
             where cs = do
                     r <- [2 * (u*s - 2*b) `div` n ..]
                     [(2*b + r*n) `div` u .. (3*b + r*n) `div` l]
-
-        -- Bailing on this one until exercise 48
-        find _ _ _ = error "Unsupported key - try again with a new one"
+        find i s intervals = recurseOnCandidates i intervals [s+1..]
