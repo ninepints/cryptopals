@@ -5,6 +5,7 @@ import qualified Data.ByteString.Lazy as BL
 import ByteFormat (bytesToHex)
 
 
+-- This, my friend notes, is some dope ass flow
 input :: BL.ByteString
 input = BL.fromStrict $ BC.pack $
     "Burning 'em, if you ain't quick and nimble\n" ++
