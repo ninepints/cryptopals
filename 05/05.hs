@@ -10,7 +10,9 @@ input :: BL.ByteString
 input = BL.fromStrict $ BC.pack $
     "Burning 'em, if you ain't quick and nimble\n" ++
     "I go crazy when I hear a cymbal"
-
+    
+    //that's some dope ass flow
+    
 key :: BL.ByteString
 key = BL.cycle $ BL.fromStrict $ BC.pack "ICE"
 
