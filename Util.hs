@@ -18,7 +18,9 @@ module Util (
     expMod,
     extGcd,
     modInv,
-    hash
+    hash,
+    powerList,
+    pairs
 ) where
 
 import Control.Monad (guard)
@@ -196,6 +198,30 @@ modInv a m | d /= 1 = error errorMsg
         (d, x, _) = extGcd a m
 
 
--- | Wrapper for hashing something with cryptonite
+-- | Wrapper for hashing something with cryptonite.
 hash :: (HashAlgorithm h, B.ByteString a) => h -> a -> a
 hash alg = B.pack . BA.unpack . hashWith alg . B.toStrict
+
+
+-- | Returns every possible list of the given length created by
+-- selecting an element from the given list for each position.
+--
+-- >>> powerList 2 [False,True]
+-- [[False,False],[False,True],[True,False],[True,True]]
+powerList :: [a] -> Integer -> [[a]]
+powerList _ n | n < 0 = error "Length negative"
+powerList _ 0 = [[]]
+powerList elems n =
+    [x:xs | x <- elems, xs <- powerList elems (n-1)]
+
+
+-- | Returns every possible pairing of elements from the given list.
+-- For two elements a and b, only one of (a, b) and (b, a) is returned.
+--
+-- >>> pairs [1]
+-- []
+-- >>> pairs [1,2,3]
+-- [(1,2),(1,3),(2,3)]
+pairs :: [a] -> [(a, a)]
+pairs xs | length xs < 2 = []
+pairs (x:xs) = [(x, y) | y <- xs] ++ pairs xs
