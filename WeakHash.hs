@@ -1,6 +1,7 @@
 module WeakHash (
     blockSize,
     makeWeakHash,
+    allBlocks,
     findCollision1,
     findCollision2,
     HashFunc,
