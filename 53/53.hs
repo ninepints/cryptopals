@@ -31,26 +31,31 @@ main = do
     let blockSize' = fromIntegral blockSize
 
         targetMsg = BC.replicate (blockSize' * 2 ^ k) 'a'
-        stateToBlocksCount = Map.fromList $
+        stateToBlockCount = Map.fromList $
             flip zip [0..] $
             scanl hash initState $
             chunksOf blockSize targetMsg
 
         finalExpMessageState = getState $ last expMessage
 
-        (bridge, Just blocksToDrop) = head $ filter (isJust . snd) $
-            map (fmap $ flip Map.lookup stateToBlocksCount) $
-            zip allBlocks $
-            map (hash finalExpMessageState) allBlocks
+        bridgeLookup = flip Map.lookup stateToBlockCount .
+            hash finalExpMessageState
 
-        expansionBlocks = blocksToDrop - k - 1
-        bools = map (testBit expansionBlocks) [0..]
+        ((bridge, bridgeAttempts), Just blocksToDrop) = head $
+            filter (isJust . snd) $
+            map (fmap bridgeLookup) $
+            zip (zip allBlocks [1..]) allBlocks
+
+        blocksToExpand = blocksToDrop - k - 1
+        bools = map (testBit blocksToExpand) [0..]
         chooseMessage bool = if bool then getLongMessage else getShortMessage
 
         targetEnd = B.drop (fromIntegral $ blockSize * blocksToDrop) targetMsg
-        expandedStart = B.concat $ zipWith chooseMessage bools expMessage
+        expStart = B.concat $ zipWith chooseMessage bools expMessage
 
-        forgedMsg = B.concat [expandedStart, bridge, targetEnd]
+        forgedMsg = B.concat [expStart, bridge, targetEnd]
+
+        expAttempts = sum $ map getAttempts expMessage
 
     putStrLn $ "Target block count: " ++
         show (B.length targetMsg `div` blockSize')
@@ -63,6 +68,9 @@ main = do
         show (B.length forgedMsg `div` blockSize')
     putStrLn $ "Forged first block: " ++ show (B.take blockSize' forgedMsg)
     putStrLn $ "Forged hash: " ++ show (hash initState forgedMsg)
+
+    putStrLn $ "Total compression function invocations: " ++
+        show (expAttempts + bridgeAttempts + 2 ^ k)
 
 
 initState :: B.ByteString
@@ -80,5 +88,5 @@ getExpMessage dbCount state = part : getExpMessage (dbCount * 2) state'
         Collision attempts shortMessage longBlock state' =
             findCollision2 hash state dummyState
 
-        part = ExpMessagePart attempts shortMessage
+        part = ExpMessagePart (attempts + dbCount) shortMessage
             (B.append dummyBlocks longBlock) state'
