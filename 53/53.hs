@@ -25,6 +25,9 @@ stateSize :: Integer
 hash :: HashFunc
 (stateSize, hash) = makeWeakHash 3 0
 
+initState :: B.ByteString
+initState = B.replicate (fromIntegral stateSize) 0
+
 
 main :: IO ()
 main = do
@@ -72,9 +75,6 @@ main = do
     putStrLn $ "Total compression function invocations: " ++
         show (expAttempts + bridgeAttempts + 2 ^ k)
 
-
-initState :: B.ByteString
-initState = B.replicate (fromIntegral stateSize) 0
 
 expMessage :: [ExpMessagePart]
 expMessage = take (fromIntegral k) $ getExpMessage 1 initState
