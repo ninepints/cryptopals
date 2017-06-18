@@ -1,6 +1,6 @@
 import Data.Time.Clock.POSIX (getPOSIXTime)
 
-import System.Random.Mersenne (next, seedGen)
+import SpecImplementations.Mersenne (next, seedGen)
 
 
 main :: IO ()

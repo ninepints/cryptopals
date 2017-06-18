@@ -77,18 +77,15 @@ findPrefixLength oracle fill = completeBlockLength + additionalLength
 findSecretLength :: Oracle -> Integer -> Integer
 findSecretLength oracle prefixLength = totalLength - prefixLength
     where
-        integerLength = fromIntegral . length
-        emptyBlockCount = integerLength $ chunksOf 16 $ oracle BS.empty
+        length' = fromIntegral . length
+        emptyBlockCount = length' $ chunksOf 16 $ oracle BS.empty
 
         findSizeAddingBlock (x:xs) = if blockCount > emptyBlockCount
             then x
             else findSizeAddingBlock xs
-            where blockCount = integerLength $ chunksOf 16 $ oracle $ aaa x
-        firstSizeAddingBlock = findSizeAddingBlock [1..]
+            where blockCount = length' $ chunksOf 16 $ oracle $ aaa x
 
-        totalLength = if firstSizeAddingBlock == 16
-            then 16 * (emptyBlockCount - 1)  -- Last block is all padding
-            else 16 * emptyBlockCount - firstSizeAddingBlock
+        totalLength = 16 * emptyBlockCount - findSizeAddingBlock [1..]
 
 
 -- Once we know the prefix length, finding the secret is similar to

@@ -15,16 +15,17 @@ main :: IO ()
 main = do
     cipher <- randomlyKeyedCipherIO :: IO AES128
 
-    [filename] <- getArgs
+    (filename : args) <- getArgs
     contents <- readFile filename
 
     let encodedSecrets = map BC.pack $ lines contents
         Just secrets = sequence $ map base64ToBytes encodedSecrets
         iv = BS.replicate 8 0
         ciphertexts = map (ctrCombine cipher iv) secrets
+        easyMode = "--easyMode" `elem` args
 
     hSetBuffering stdin NoBuffering
-    keystream <- crackSharedKeystream stdin ciphertexts
+    keystream <- crackSharedKeystream easyMode stdin ciphertexts
     putStrLn "\ESC[2J"
     putStrLn $ "The key is " ++ show keystream
     putStrLn $ "The plaintexts are:"

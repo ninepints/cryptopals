@@ -19,26 +19,27 @@ import qualified Vigenere
 type KeyTable = ListZipper (ListZipper Word8)
 
 
-crackSharedKeystream :: B.ByteString a => Handle -> [a] -> IO a
-crackSharedKeystream h ciphertexts = interact h ciphertexts table
-    where table = newTable ciphertexts
+crackSharedKeystream :: B.ByteString a => Bool -> Handle -> [a] -> IO a
+crackSharedKeystream easyMode h ciphertexts = interact h ciphertexts table
+    where table = newTable easyMode ciphertexts
 
 
-newTable :: B.ByteString a => [a] -> KeyTable
-newTable ciphertexts = ListZipper [] $ map candidatesForIndex [0..maxLen-1]
+newTable :: B.ByteString a => Bool -> [a] -> KeyTable
+newTable easyMode ciphertexts = zipper $ map candidatesForIndex [0..maxLen-1]
     where
+        zipper = ListZipper []
         maxLen = maximum $ map B.length ciphertexts
 
         byteAtIndex i ct | B.length ct <= i = Nothing
                          | otherwise = Just $ B.index ct i
-
         bytesAtIndex i = BS.pack $ catMaybes $ map (byteAtIndex i) ciphertexts
 
-        candidatesForIndex = ListZipper [] .
-            map Vigenere.key .
-            sortBy (compare `on` Vigenere.score) .
-            Vigenere.guessSingleByteKey .
-            bytesAtIndex
+        candidatesForIndex = zipper . if easyMode
+            then map Vigenere.key .
+                 sortBy (compare `on` Vigenere.score) .
+                 Vigenere.guessSingleByteKey .
+                 bytesAtIndex
+            else const [0..255]
 
 
 keyBytes :: KeyTable -> [Word8]
@@ -74,10 +75,10 @@ interact h ciphertexts table = do
     if input == 'q'
         then return $ B.pack $ keyBytes table
         else let action = case input of
-                    'i' -> prevKey >> return ()
-                    'j' -> prev >> return ()
-                    'k' -> nextKey >> return ()
-                    'l' -> next >> return ()
+                    'w' -> prevKey >> return ()
+                    'a' -> prev >> return ()
+                    's' -> nextKey >> return ()
+                    'd' -> next >> return ()
                     _ -> return ()
             in interact h ciphertexts $ execState action table
 

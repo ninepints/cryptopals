@@ -65,7 +65,7 @@ main = do
         aHmac = hmac SHA256 aKey salt
         password' = guessPassword aPub bPriv u salt aHmac
 
-    putStrLn $ "Recovered password " ++ show password'
+    putStrLn $ "Found password " ++ show password'
 
 
 getClientKey :: Integer -> Integer -> Integer ->
