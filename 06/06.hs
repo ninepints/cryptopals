@@ -11,6 +11,6 @@ main = do
     contents <- readFile filename
 
     let Just decodedContents = base64ToBytes $ pack $ concat $ lines contents
-        candidates = V.guessVigenereKey decodedContents
+        guesses = V.guessVigenereKey decodedContents
 
-    sequence_ $ map (putStrLn . V.showSolution) candidates
+    sequence_ $ map (putStrLn . V.showKeyGuess) guesses

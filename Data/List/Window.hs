@@ -1,11 +1,12 @@
 module Data.List.Window where
 
 
--- | Move a "window" over a list, capturing the contents
+-- | Move a \"window\" over a list, capturing the contents
 -- of the window at each position.
 --
 -- >>> window 2 [1,2,3,4]
 -- [[1,2],[2,3],[3,4]]
+
 -- >>> window 5 [1,2,3,4]
 -- []
 window :: Integer -> [a] -> [[a]]

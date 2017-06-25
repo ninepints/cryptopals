@@ -28,16 +28,27 @@ import Data.Chunkable (chunksOf)
 data Endianness = BigEndian | LittleEndian
 
 
+-- | Merkle-Damgård hash implementation
 class Show h => HashImpl h a | h -> a where
+
+    -- | Returns the endianness of the length padding
     padEndianness :: h -> Endianness
+
+    -- | Returns the initial state
     initState :: h -> a
+
+    -- | Updates a state with a single-block ByteString
     updateWithChunk :: h -> a -> BS.ByteString -> a
+
+    -- | Packs a state into a ByteString
     pack :: h -> a -> BS.ByteString
+
+    -- | Unpacks a state from a ByteString
     unpack :: h -> BS.ByteString -> Maybe a
 
 
--- | Hash context, including a count of bytes hashed so far
--- and any "remaining" bytes that have yet to be hashed
+-- | Merkle-Damgård hash context, including a hash state, a count of
+-- bytes hashed so far, and any bytes that have yet to be hashed
 data Context a = Context {
     getState :: a,
     getByteCount :: Integer,
@@ -45,14 +56,18 @@ data Context a = Context {
 } deriving Show
 
 
+-- | Hashes a ByteString.
 hash :: (HashImpl h a, BC.ByteString b) => h -> b -> BS.ByteString
 hash impl = finalize impl . update impl (buildInitContext impl)
 
 
+-- | Returns the initial hash context.
 buildInitContext :: HashImpl h a => h -> Context a
 buildInitContext impl = Context (initState impl) 0 BL.empty
 
 
+-- | Constructs a hash contest from a packed state
+-- and a count of hashed bytes.
 buildContext :: HashImpl h a =>
     h -> BS.ByteString -> Integer -> Maybe (Context a)
 buildContext impl bytes byteCount = do
@@ -61,6 +76,7 @@ buildContext impl bytes byteCount = do
     return $ Context state byteCount BL.empty
 
 
+-- | Updates a hash context with a ByteString.
 update :: (HashImpl h a, BC.ByteString b) => h -> Context a -> b -> Context a
 update impl (Context state cnt rem) bytes = drainChunks impl newContext
     where
@@ -68,6 +84,7 @@ update impl (Context state cnt rem) bytes = drainChunks impl newContext
         newContext = Context state cnt rem'
 
 
+-- | Finalizes a hash context, returning the hash value.
 finalize :: HashImpl h a => h -> Context a -> BS.ByteString
 finalize impl (Context state cnt rem) = pack impl finalState
     where

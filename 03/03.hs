@@ -12,7 +12,7 @@ Just input = hexToBytes $ pack $
     "78397828372d363c78373e783a393b3736"
 
 main :: IO ()
-main = sequence_ $ map (putStrLn . V.showSolution) topCandidates
+main = sequence_ $ map (putStrLn . V.showKeyGuess) topCandidates
     where
         candidates = V.guessSingleByteKey input
-        topCandidates = take 5 $ sortBy (compare `on` V.score) candidates
+        topCandidates = take 5 $ sortBy (compare `on` V.getScore) candidates

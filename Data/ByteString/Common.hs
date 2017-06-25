@@ -7,6 +7,7 @@ import Prelude (($), (.), fromIntegral, id, Bool, Integer, Maybe)
 import qualified Prelude as P
 
 
+-- | Operations on strict or lazy ByteStrings.
 class ByteString a where
     all :: (Word8 -> Bool) -> a -> Bool
     append :: a -> a -> a
@@ -113,5 +114,6 @@ instance ByteString BL.ByteString where
     zipWith = BL.zipWith
 
 
+-- | Takes the first N bytes of the infinite repetition of a ByteString.
 cycleToLength :: ByteString a => Integer -> a -> a
 cycleToLength len = pack . P.take (fromIntegral len) . P.cycle . unpack

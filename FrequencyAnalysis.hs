@@ -57,6 +57,8 @@ normalize = B.pack . map toLower' . normAfterConsecutiveSpaces 0 . B.unpack
             | otherwise = x : normAfterConsecutiveSpaces 0 xs
 
 
+-- | Computes the frequency of bytes in a ByteString, returning a map
+-- of byte to relative frequency (values between 0 and 1 inclusive).
 getFrequencyMap :: B.ByteString a => a -> Map.Map Word8 Double
 getFrequencyMap s = Map.map (/letterTotal) letterCounts
     where
@@ -64,6 +66,12 @@ getFrequencyMap s = Map.map (/letterTotal) letterCounts
         letterTotal = fromIntegral $ B.length s
 
 
+-- | Estimates the distance of a ByteString from English text based on
+-- character frequency. Higher values indicate input less likely to be
+-- English. Distance is calculated by normalizing the input and taking
+-- the sum (over normalized input characters) of the squared difference
+-- between each character's frequency in the input versus its expected
+-- frequency in English.
 scoreEnglish :: B.ByteString a => a -> Double
 scoreEnglish s = if B.length sNorm == 0
     then 1

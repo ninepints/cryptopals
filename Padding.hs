@@ -16,6 +16,8 @@ import System.Random (getStdRandom, randomR, RandomGen)
 import Util (finiteRandoms)
 
 
+-- | Given a block size and an input size, how many bytes must we
+-- append to the input to make its length a multiple of the block size?
 padLength :: Integer -> Integer -> Integer
 padLength blockSize byteCount = (blockSize - bytesInLastBlock) `mod` blockSize
     where bytesInLastBlock = byteCount `mod` blockSize

@@ -10,6 +10,8 @@ import Padding (constantPad)
 import Util (xorBytes)
 
 
+-- | Adapts a function that accepts lists of blocks to accept a
+-- single ByteString.
 blockAdapt :: BlockCipher c =>
     (c -> B.ByteString -> [B.ByteString] -> [B.ByteString]) ->
     c -> B.ByteString -> B.ByteString -> B.ByteString
@@ -17,7 +19,7 @@ blockAdapt blockFunc cipher iv = B.concat . blockFunc cipher iv . split
     where split = C.chunksOf $ fromIntegral $ blockSize cipher
 
 
--- | Encrypt a ByteString using CBC mode.
+-- | Encrypts a ByteString using CBC mode.
 -- The input string should be a multiple of the cipher block size.
 cbcEncrypt :: BlockCipher c =>
     c -> B.ByteString -> B.ByteString -> B.ByteString
@@ -33,7 +35,7 @@ cbcEncryptBlocks cipher iv remainingBlocks = outputHead : outputTail
         outputTail = cbcEncryptBlocks cipher nextIv $ tail remainingBlocks
 
 
--- | Decrypt a ByteString using CBC mode.
+-- | Decrypts a ByteString using CBC mode.
 -- The input string should be a multiple of the cipher block size.
 cbcDecrypt :: BlockCipher c =>
     c -> B.ByteString -> B.ByteString -> B.ByteString
@@ -49,7 +51,7 @@ cbcDecryptBlocks cipher iv remainingBlocks = outputHead : outputTail
         outputTail = cbcDecryptBlocks cipher nextIv $ tail remainingBlocks
 
 
--- Encrypt or decrypt a ByteString using CTR mode.
+-- Encrypts or decrypts a ByteString using CTR mode.
 ctrCombine :: BlockCipher c =>
     c -> B.ByteString -> B.ByteString -> B.ByteString
 ctrCombine cipher iv input

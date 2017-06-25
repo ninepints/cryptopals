@@ -11,21 +11,16 @@ import ByteFormat (hexToBytes)
 import qualified Vigenere as V
 
 
-type IndexedCandidate = (Integer, V.Solution ByteString Word8)
+type IndexedGuess = (Integer, V.KeyGuess ByteString Word8)
 
 
-toIndexedCandidates :: (Integer, ByteString) -> [IndexedCandidate]
-toIndexedCandidates (i, ciphertext) = map (i,) candidates
-    where candidates = V.guessSingleByteKey ciphertext
+toIndexedGuesses :: (Integer, ByteString) -> [IndexedGuess]
+toIndexedGuesses (i, ciphertext) = map (i,) guesses
+    where guesses = V.guessSingleByteKey ciphertext
 
 
-indexedCandidateCmp :: IndexedCandidate -> IndexedCandidate -> Ordering
-indexedCandidateCmp = compare `on` (V.score . snd)
-
-
-showIndexedCandidate :: IndexedCandidate -> String
-showIndexedCandidate c = "Line " ++ show (fst c) ++ ": " ++
-    V.showSolution (snd c)
+showIndexedGuess :: IndexedGuess -> String
+showIndexedGuess c = "Line " ++ show (fst c) ++ ": " ++ V.showKeyGuess (snd c)
 
 
 main :: IO ()
@@ -35,7 +30,7 @@ main = do
 
     let decodedLines = map (fromJust . hexToBytes . pack) $ lines contents
         indexedLines = zip [1..] decodedLines
-        candidates = indexedLines >>= toIndexedCandidates
-        topCandidates = take 5 $ sortBy indexedCandidateCmp candidates
+        guesses = indexedLines >>= toIndexedGuesses
+        topGuesses = take 5 $ sortBy (compare `on` (V.getScore . snd)) guesses
 
-    sequence_ $ map (putStrLn . showIndexedCandidate) topCandidates
+    sequence_ $ map (putStrLn . showIndexedGuess) topGuesses

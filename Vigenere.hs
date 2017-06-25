@@ -1,9 +1,9 @@
 module Vigenere (
-    showSolution,
+    showKeyGuess,
     guessSingleByteKey,
     guessVigenereKey,
     guessVigenereKey',
-    Solution(..)
+    KeyGuess(..)
 ) where
 
 import Data.Bits (xor)
@@ -35,40 +35,40 @@ guessKeySize ciphertext = sortBy (compare `on` score) [2..maxSize]
                 totalBytes = size * fromIntegral (length chunkPairs)
 
 
-data Solution a k = Solution {
-    key :: k,
-    ciphertext :: a,
-    plaintext :: a,
-    score :: Double
+data KeyGuess a k = KeyGuess {
+    getKey :: k,
+    getCiphertext :: a,
+    getPlaintext :: a,
+    getScore :: Double
 }
 
-toSolution :: B.ByteString a => (a -> k -> a) -> a -> k -> Solution a k
-toSolution decipherFunc ciphertext key = Solution
+toGuessObj :: B.ByteString a => (a -> k -> a) -> a -> k -> KeyGuess a k
+toGuessObj decipherFunc ciphertext key = KeyGuess
     key
     ciphertext
     (decipherFunc ciphertext key)
     (FrequencyAnalysis.scoreEnglish $ decipherFunc ciphertext key)
 
--- Builds a String representation of a Solution. I could just make
--- Solution part of the Show typeclass, but the Show documentation
--- says Show representations should be "syntactically correct Haskell
--- expressions" and I don't wanna print the ciphertext out each time
-showSolution :: (Show a, Show k) => Solution a k -> String
-showSolution d = "Solution {key = " ++ show (key d) ++
-    ", plaintext = " ++ show (plaintext d) ++
-    ", score = " ++ show (score d) ++ "}"
+-- Builds a String representation of a key guess. I could make KeyGuess
+-- part of the Show typeclass, but the Show documentation says Show
+-- representations should be \"syntactically correct Haskell
+-- expressions\" and I don't wanna print the ciphertext out each time
+showKeyGuess :: (Show a, Show k) => KeyGuess a k -> String
+showKeyGuess d = "KeyGuess {key = " ++ show (getKey d) ++
+    ", plaintext = " ++ show (getPlaintext d) ++
+    ", score = " ++ show (getScore d) ++ "}"
 
 
 -- | Guesses the single-byte repeating key with which a ciphertext
--- was XOR'ed. Returns a list of all possible solutions.
-guessSingleByteKey :: B.ByteString a => a -> [Solution a Word8]
-guessSingleByteKey ciphertext = map (toSolution decipher ciphertext) [0..255]
+-- was XOR'ed. Returns a list of all possible keys.
+guessSingleByteKey :: B.ByteString a => a -> [KeyGuess a Word8]
+guessSingleByteKey ciphertext = map (toGuessObj decipher ciphertext) [0..255]
     where decipher text key = B.map (xor key) text
 
 
-
 -- | Guesses the Vigenere key with which a ciphertext was XOR'ed.
-guessVigenereKey :: (B.ByteString a, Chunkable a) => a -> [Solution a a]
+-- Returns a list of the top three keys based on distance from English.
+guessVigenereKey :: (B.ByteString a, Chunkable a) => a -> [KeyGuess a a]
 guessVigenereKey ciphertext
     | B.length ciphertext < 4 = error "Four-plus bytes required to guess key"
     | otherwise = guessVigenereKey' ciphertext topKeySizes
@@ -77,11 +77,12 @@ guessVigenereKey ciphertext
 
 -- | Guesses the Vigenere key with which a ciphertext was XOR'ed.
 -- Guesses are based on the given list of key sizes.
+-- Returns a list of the top three keys based on distance from English.
 guessVigenereKey' :: (B.ByteString a, Chunkable a) =>
-    a -> [Integer] -> [Solution a a]
+    a -> [Integer] -> [KeyGuess a a]
 guessVigenereKey' ciphertext keySizes = map wrapper vigenereKeys
     where
-        wrapper = toSolution decipher ciphertext
+        wrapper = toGuessObj decipher ciphertext
         decipher text key = xorBytes (B.cycleToLength (B.length text) key) text
 
         -- Single-byte ciphertexts for each byte for each key size: [[a]]
@@ -94,8 +95,9 @@ guessVigenereKey' ciphertext keySizes = map wrapper vigenereKeys
         -- is longer than a few bytes): [[[Word8]]]
         singleByteKeys = map (map guessKeys) singleByteCiphertexts
             where
-                guessKeys = take 1 . map key . sortBy cmp . guessSingleByteKey
-                cmp = compare `on` score
+                guessKeys = take 1 . map getKey .
+                    sortBy (compare `on` getScore) .
+                    guessSingleByteKey
 
         -- Top Vigenere keys for each key size (all combinations of
         -- single-byte keys): [a]

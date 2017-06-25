@@ -1,4 +1,4 @@
--- Based on https://tools.ietf.org/html/rfc1320
+-- Based on <https://tools.ietf.org/html/rfc1320>
 
 {-# LANGUAGE MultiParamTypeClasses #-}
 

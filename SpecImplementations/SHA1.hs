@@ -1,4 +1,4 @@
--- Based on pseudocode from https://en.wikipedia.org/wiki/SHA-1
+-- Based on pseudocode from <https://en.wikipedia.org/wiki/SHA-1>
 
 {-# LANGUAGE MultiParamTypeClasses #-}
 

@@ -1,6 +1,3 @@
--- There are almost certainly packages for this
--- but I think the point is to do it by hand
-
 module ByteFormat (
     hexToBytes,
     bytesToHex,
@@ -122,10 +119,11 @@ bytesToBase64 bytes = B.pack base64Chars
         base4To64 [x] = [encode (16 * x), eq, eq]
 
 
--- | Return a big-endian representation of a nonnegative integer.
+-- | Returns a big-endian representation of a nonnegative integer.
 --
 -- >>> integerToBytes 24936
 -- "ah"
+--
 -- >>> integerToBytes 0
 -- "\NUL"
 integerToBytes :: B.ByteString a => Integer -> a
@@ -136,15 +134,18 @@ integerToBytes n | n < 0 = error "Input negative"
             where pair = swap $ fmap fromIntegral $ m `divMod` 256
 
 
+-- | Converts a big-endian ByteString to an integer.
 bytesToInteger :: B.ByteString a => a -> Integer
 bytesToInteger = B.foldl (\acc byte -> 256 * acc + fromIntegral byte) 0
 
 
+-- | URL-escapes the characters @\"!*\'();:\@&=+$,\/?#[]\"@
+-- in a ByteString.
 urlEscape :: B.ByteString a => a -> a
 urlEscape = urlEscapeChars $ B.fromStrict $ BChar.pack "!*'();:@&=+$,/?#[]"
 
--- | URL-escape the second argument, only replacing bytes that are
--- present in the first.
+-- | URL-escape the second argument, replacing bytes that are present
+-- in the first.
 urlEscapeChars :: B.ByteString a => a -> a -> a
 urlEscapeChars escapeBytes = B.concatMap escape
     where
